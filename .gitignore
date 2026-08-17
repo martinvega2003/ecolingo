@@ -1,0 +1,23 @@
+# Dependencias
+node_modules/
+
+# Entorno
+.env
+.env.local
+.env.*.local
+
+# Builds
+dist/
+build/
+.vercel/
+
+# Respaldos de la base — contienen datos de alumnos
+backups/
+
+# Sistema y editor
+.DS_Store
+Thumbs.db
+*.log
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
