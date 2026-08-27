@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 
+// Transform global: toda respuesta expone `id` (string) en lugar de `_id`,
+// y nunca serializa `passwordHash`. Definido en la §0.1/§0.7 de la guía.
 mongoose.set('toJSON', {
   virtuals: true,
   versionKey: false,
@@ -11,6 +13,7 @@ mongoose.set('toJSON', {
   },
 });
 
+// En desarrollo, imprime cada consulta en la consola.
 if (process.env.NODE_ENV === 'development') {
   mongoose.set('debug', true);
 }
@@ -32,5 +35,5 @@ export const connectDatabase = async () => {
   }
 };
 
-mongoose.connection.on('disconnected', () => console.warn('⚠️  MongoDB desconectado'));
-mongoose.connection.on('reconnected', () => console.log('✅ MongoDB reconectado'));
+mongoose.connection.on('disconnected', () => console.warn('MongoDB desconectado'));
+mongoose.connection.on('reconnected', () => console.log('MongoDB reconectado'));
