@@ -7,5 +7,5 @@ const PORT = process.env.PORT || 4000;
 await connectDatabase();
 
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor escuchando en http://localhost:${PORT}`);
+  console.log(`Servidor escuchando en http://localhost:${PORT}`);
 });
