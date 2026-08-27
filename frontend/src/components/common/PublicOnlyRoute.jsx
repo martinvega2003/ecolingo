@@ -2,7 +2,7 @@
 // login y se reautentique "por encima" de su propia sesión sin pasar por
 // logout. Redirige por rol (alumno -> /mapa, docente -> /docente).
 import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '../../hooks/UseAuth.js';
+import { useAuth } from '../../hooks/useAuth.js';
 import { homeRouteForRole } from '../../utils/routes.js';
 
 const PublicOnlyRoute = () => {

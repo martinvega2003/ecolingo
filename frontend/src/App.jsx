@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthProvider.jsx';
-import { useAuth } from './hooks/UseAuth.js'; 
+import { useAuth } from './hooks/useAuth.js'; 
 import ProtectedRoute from './components/common/ProtectedRoute.jsx';
 import PublicOnlyRoute from './components/common/PublicOnlyRoute.jsx';
 import Header from './components/layout/Header.jsx';

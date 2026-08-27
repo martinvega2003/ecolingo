@@ -1,7 +1,7 @@
 // allowedRoles es opcional: sin especificar, solo exige sesión válida;
 // con ['student'] o ['teacher'], aplica el guard por rol de la tabla de rutas
 import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '../../hooks/UseAuth.js';
+import { useAuth } from '../../hooks/useAuth.js';
 import { homeRouteForRole } from '../../utils/routes.js';
 
 const ProtectedRoute = ({ allowedRoles }) => {
