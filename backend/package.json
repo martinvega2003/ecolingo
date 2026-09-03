@@ -1,12 +1,12 @@
 {
   "name": "ecolingo-backend",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
-    "seed:auth": "node src/seeds/runAuthOnly.js"
+    "seed:dev": "node src/seeds/runDevSeed.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
