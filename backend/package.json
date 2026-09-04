@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
-    "seed:auth": "node src/seeds/runAuthOnly.js"
+    "seed:auth": "node src/seeds/runAuthOnly.js",
+    "seed:modules": "node src/seeds/runModulesOnly.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",

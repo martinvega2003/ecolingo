@@ -8,6 +8,7 @@ import AppLayout from './components/layout/AppLayout.jsx';
 import FeaturePlaceholder from './components/common/FeaturePlaceholder.jsx';
 import NotFoundPage from './components/common/NotFoundPage.jsx';
 import Login from './pages/Login.jsx';
+import Mapa from './pages/Mapa.jsx';
 
 // "/" — entrada al sitio. Honra literal el texto de §0.12 para el
 // wildcard ("Redirección a /mapa o /login según sesión"): acá sí es un
@@ -32,10 +33,7 @@ function App() {
           {/* Alumno — guard: student, con tabs Módulos/Ranking/Logros */}
           <Route element={<ProtectedRoute allowedRoles={['student']} />}>
             <Route element={<AppLayout showTabs />}>
-              <Route
-                path="/mapa"
-                element={<FeaturePlaceholder title="Mapa de Módulos" feature="F03" owner="Persona A" />}
-              />
+              <Route path="/mapa" element={<Mapa />} />
               <Route
                 path="/leccion/:moduleId/teoria"
                 element={<FeaturePlaceholder title="Contenido teórico" feature="F11" owner="Persona B" />}
