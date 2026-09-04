@@ -57,7 +57,7 @@ export default function Mapa() {
   if (state === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-bg">
-        <p className="text-muted text-sm">Cargando tu mapa...</p>
+        <p className="text-muted text-sm">Preparando tu camino financiero...</p>
       </div>
     );
   }
