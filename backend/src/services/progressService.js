@@ -7,27 +7,43 @@
 // F04 hace esa creación perezosa acá mismo, para no depender de que el
 // mapa la haya hecho antes. Cuando Cesar construya F03, este servicio es
 // el lugar natural para que el endpoint 5 (GET /modules) reutilice la
-// misma lógica en vez de duplicarla — evita el riesgo que el propio
-// documento señala sobre inconsistencias por escribir la misma regla en
-// dos lugares distintos.
+// misma lógica en vez de duplicarla.
+//
+// BUG corregido: 'locked' se estaba calculando una sola vez, al crear el
+// documento, y quedaba fijo para siempre — aunque después se completara
+// el módulo anterior, este seguía marcado locked. 'available' y
+// 'completed' son estados estables (nada los revierte), pero 'locked'
+// depende de una condición externa (el progress del módulo anterior)
+// que puede cambiar después de creado este documento. Por eso 'locked'
+// es el único que hay que re-evaluar en cada acceso, no solo al crear.
 import { Module, Progress } from '../models/index.js';
 import { conflict } from '../utils/apiError.js';
 
+// Único punto de verdad para "¿este módulo debería estar desbloqueado
+// ahora mismo?" — usado tanto al crear el documento por primera vez
+// como al re-evaluar uno que ya existe en 'locked'.
+const isModuleUnlockable = async (userId, moduleDoc) => {
+  if (moduleDoc.order === 1) return true;
+
+  const previousModule = await Module.findOne({ order: moduleDoc.order - 1 });
+  if (!previousModule) return false;
+
+  const previousProgress = await Progress.findOne({ userId, moduleId: previousModule._id });
+  return previousProgress?.status === 'completed';
+};
+
 export const getOrCreateProgress = async (userId, moduleDoc) => {
   const existing = await Progress.findOne({ userId, moduleId: moduleDoc._id });
-  if (existing) return existing;
 
-  let status = 'locked';
-  if (moduleDoc.order === 1) {
-    status = 'available';
-  } else {
-    const previousModule = await Module.findOne({ order: moduleDoc.order - 1 });
-    if (previousModule) {
-      const previousProgress = await Progress.findOne({ userId, moduleId: previousModule._id });
-      if (previousProgress?.status === 'completed') status = 'available';
+  if (existing) {
+    if (existing.status === 'locked' && (await isModuleUnlockable(userId, moduleDoc))) {
+      existing.status = 'available';
+      await existing.save();
     }
+    return existing;
   }
 
+  const status = (await isModuleUnlockable(userId, moduleDoc)) ? 'available' : 'locked';
   return Progress.create({ userId, moduleId: moduleDoc._id, status });
 };
 
