@@ -1,3 +1,5 @@
+// v2.2 (D-16 revisada): se sacó la ruta /leccion/:moduleId/teoria — F11
+// se descartó, no hay pantalla de teoría.
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthProvider.jsx';
 import { useAuth } from './hooks/useAuth.js';
@@ -8,6 +10,7 @@ import AppLayout from './components/layout/AppLayout.jsx';
 import FeaturePlaceholder from './components/common/FeaturePlaceholder.jsx';
 import NotFoundPage from './components/common/NotFoundPage.jsx';
 import Login from './pages/Login.jsx';
+import LessonScreen from './pages/LessonScreen.jsx';
 
 // "/" — entrada al sitio. Honra literal el texto de §0.12 para el
 // wildcard ("Redirección a /mapa o /login según sesión"): acá sí es un
@@ -36,14 +39,7 @@ function App() {
                 path="/mapa"
                 element={<FeaturePlaceholder title="Mapa de Módulos" feature="F03" owner="Persona A" />}
               />
-              <Route
-                path="/leccion/:moduleId/teoria"
-                element={<FeaturePlaceholder title="Contenido teórico" feature="F11" owner="Persona B" />}
-              />
-              <Route
-                path="/leccion/:attemptId"
-                element={<FeaturePlaceholder title="Lección" feature="F04" owner="Persona B" />}
-              />
+              <Route path="/leccion/:attemptId" element={<LessonScreen />} />
               <Route
                 path="/resultado/:attemptId"
                 element={<FeaturePlaceholder title="Resultado del módulo" feature="F05" owner="Ambos" />}
