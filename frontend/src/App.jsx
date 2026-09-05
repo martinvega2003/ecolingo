@@ -1,3 +1,5 @@
+// v2.2 (D-16 revisada): se sacó la ruta /leccion/:moduleId/teoria — F11
+// se descartó, no hay pantalla de teoría.
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthProvider.jsx';
 import { useAuth } from './hooks/useAuth.js';
@@ -36,10 +38,6 @@ function App() {
               <Route
                 path="/mapa"
                 element={<FeaturePlaceholder title="Mapa de Módulos" feature="F03" owner="Persona A" />}
-              />
-              <Route
-                path="/leccion/:moduleId/teoria"
-                element={<FeaturePlaceholder title="Contenido teórico" feature="F11" owner="Persona B" />}
               />
               <Route path="/leccion/:attemptId" element={<LessonScreen />} />
               <Route
