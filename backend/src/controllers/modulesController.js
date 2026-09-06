@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { Module, User, Badge, UserBadge } from '../models/index.js'; // agregar los 4 al barrel — ver nota al final
+import { Module, User, Badge, UserBadge, ModuleAttempt } from '../models/index.js'; // agregar los 4 al barrel — ver nota al final
 import { badRequest, notFound } from '../utils/apiError.js';
 import { getOrCreateProgressForUser } from '../services/progressService.js';
 
@@ -11,6 +11,15 @@ import { getOrCreateProgressForUser } from '../services/progressService.js';
 export async function getModules(req, res, next) {
   try {
     const { modules, progressByModuleId } = await getOrCreateProgressForUser(req.user.id);
+
+    // Una sola consulta para todos los módulos, en vez de N+1 dentro del map.
+    const activeAttempts = await ModuleAttempt
+      .find({ userId: req.user.id, status: 'in_progress' })
+      .select('_id moduleId')
+      .lean();
+    const activeAttemptByModuleId = new Map(
+      activeAttempts.map((a) => [String(a.moduleId), String(a._id)])
+    );
 
     const modulesResponse = modules.map((mod, index) => {
       const progress = progressByModuleId.get(String(mod._id));
@@ -31,6 +40,7 @@ export async function getModules(req, res, next) {
         isPerfect: progress.isPerfect,
         attemptCount: progress.attemptCount,
         firstCompletedAt: progress.firstCompletedAt,
+        activeAttemptId: activeAttemptByModuleId.get(String(mod._id)) ?? null,
       };
 
       if (progress.status === 'locked' && previous) {
@@ -94,6 +104,11 @@ export async function getModuleDetail(req, res, next) {
       ? await UserBadge.exists({ userId: req.user.id, badgeCode: mod.badgeCode })
       : false;
 
+    const activeAttempt = await ModuleAttempt
+      .findOne({ userId: req.user.id, moduleId: mod._id, status: 'in_progress' })
+      .select('_id')
+      .lean();
+
     res.json({
       id: String(mod._id),
       order: mod.order,
@@ -104,7 +119,9 @@ export async function getModuleDetail(req, res, next) {
       questionCount: mod.questionCount,
       xpReward: mod.xpReward,
       xpPerCorrectAnswer: mod.xpPerCorrectAnswer,
+      livesPerAttempt: 3,
       status: progress.status,
+      activeAttemptId: activeAttempt ? String(activeAttempt._id) : null,
       badge: badgeDoc
         ? { code: badgeDoc.code, name: badgeDoc.name, emoji: badgeDoc.emoji, isUnlocked: Boolean(unlocked) }
         : null,

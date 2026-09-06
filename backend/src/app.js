@@ -3,6 +3,7 @@ import cors from 'cors';
 import mongoose from 'mongoose';
 import authRoutes from './routes/authRoutes.js';
 import modulesRoutes from './routes/modulesRoutes.js';
+import lessonRoutes from './routes/lessonRoutes.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 
 const app = express();
@@ -26,6 +27,8 @@ app.use('/api/v1', authRoutes);
 
 // F03 — Mapa de Módulos (Parte 1: endpoints 5, 6, 12)
 app.use('/api/v1', modulesRoutes);
+// F04 — Motor de Lección (Parte 1: endpoints 7, 8, 9, 10)
+app.use('/api/v1', lessonRoutes);
 
 // 404 con el envoltorio de error estándar — literal de §0.7. Nota: el
 // código NOT_FOUND no figura en la tabla del catálogo de §0.1, aunque sí
