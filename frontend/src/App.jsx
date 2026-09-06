@@ -10,6 +10,7 @@ import AppLayout from './components/layout/AppLayout.jsx';
 import FeaturePlaceholder from './components/common/FeaturePlaceholder.jsx';
 import NotFoundPage from './components/common/NotFoundPage.jsx';
 import Login from './pages/Login.jsx';
+import Mapa from './pages/Mapa.jsx';
 import LessonScreen from './pages/LessonScreen.jsx';
 
 // "/" — entrada al sitio. Honra literal el texto de §0.12 para el
@@ -35,10 +36,7 @@ function App() {
           {/* Alumno — guard: student, con tabs Módulos/Ranking/Logros */}
           <Route element={<ProtectedRoute allowedRoles={['student']} />}>
             <Route element={<AppLayout showTabs />}>
-              <Route
-                path="/mapa"
-                element={<FeaturePlaceholder title="Mapa de Módulos" feature="F03" owner="Persona A" />}
-              />
+              <Route path="/mapa" element={<Mapa />} />
               <Route path="/leccion/:attemptId" element={<LessonScreen />} />
               <Route
                 path="/resultado/:attemptId"

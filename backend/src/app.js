@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import authRoutes from './routes/authRoutes.js';
+import modulesRoutes from './routes/modulesRoutes.js';
 import lessonRoutes from './routes/lessonRoutes.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 
@@ -24,6 +25,8 @@ app.get('/api/v1/health', (req, res) => {
 // F01 — Autenticación (Parte 1: endpoints 2, 3, 4, 26)
 app.use('/api/v1', authRoutes);
 
+// F03 — Mapa de Módulos (Parte 1: endpoints 5, 6, 12)
+app.use('/api/v1', modulesRoutes);
 // F04 — Motor de Lección (Parte 1: endpoints 7, 8, 9, 10)
 app.use('/api/v1', lessonRoutes);
 
