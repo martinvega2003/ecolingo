@@ -173,7 +173,7 @@ export const answerQuestion = async ({ userId, attemptId, questionId, selectedOp
     }
 
     const xpToCredit = attempt.status === 'completed' ? attempt.xpEarned : 0;
-    await registerActivity({ userId, xpAmount: xpToCredit });
+    await registerActivity({ userId, xpAmount: xpToCredit, durationSeconds: attempt.durationSeconds });
 
     // evaluateBadges no corre para "abandoned" — eso pasa por el
     // endpoint 10 (abandon), no por acá, así que este tramo siempre es
@@ -234,7 +234,7 @@ export const abandonAttempt = async ({ userId, attemptId }) => {
   // Abandonar SÍ cuenta como actividad real para la racha (el alumno
   // entró a jugar hoy), pero NO otorga XP ni insignias — explícito en
   // Parte 1, F04, endpoint 10.
-  await registerActivity({ userId, xpAmount: 0 });
+  await registerActivity({ userId, xpAmount: 0, durationSeconds: attempt.durationSeconds });
 
   return {
     attempt: {

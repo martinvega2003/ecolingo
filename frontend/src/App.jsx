@@ -12,11 +12,12 @@ import NotFoundPage from './components/common/NotFoundPage.jsx';
 import Login from './pages/Login.jsx';
 import Mapa from './pages/Mapa.jsx';
 import LessonScreen from './pages/LessonScreen.jsx';
+import TeacherClasses from './pages/TeacherClasses.jsx';
+import TeacherClassDetail from './pages/TeacherClassDetail.jsx';
 
-// "/" — entrada al sitio. Honra literal el texto de §0.12 para el
-// wildcard ("Redirección a /mapa o /login según sesión"): acá sí es un
+// "/" — entrada al sitio ("Redirección a /mapa o /login según sesión"): acá sí es un
 // redirect silencioso, sin pantalla. Cualquier OTRA ruta desconocida cae
-// en NotFoundPage (ver la nota de la contradicción ahí).
+// en NotFoundPage.
 const RootRedirect = () => {
   const { isAuthenticated, isLoading, user } = useAuth();
   if (isLoading) return null;
@@ -56,14 +57,8 @@ function App() {
           {/* Docente — guard: teacher, sin tabs */}
           <Route element={<ProtectedRoute allowedRoles={['teacher']} />}>
             <Route element={<AppLayout />}>
-              <Route
-                path="/docente"
-                element={<FeaturePlaceholder title="Panel del Docente" feature="F08" owner="Persona B" />}
-              />
-              <Route
-                path="/docente/clase/:classCode"
-                element={<FeaturePlaceholder title="Detalle de clase" feature="F08" owner="Persona B" />}
-              />
+              <Route path="/docente" element={<TeacherClasses />} />
+              <Route path="/docente/clase/:classCode" element={<TeacherClassDetail />} />
             </Route>
           </Route>
 
