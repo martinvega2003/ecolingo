@@ -26,14 +26,23 @@ const computeStreak = (user, now = new Date()) => {
 // abandoned — todas cuentan como "actividad real"), acredite o no XP.
 // xpAmount es 0 para intentos failed/abandoned o repeticiones (§0.8:
 // "otorgan 0 XP") — igual se registra la racha, solo que sin sumar XP.
-export const registerActivity = async ({ userId, xpAmount = 0 }) => {
+//
+// 🐛 BUG encontrado y corregido acá: totalTimeSpentSeconds (User.js) nunca
+// se incrementaba en ningún servicio — quedaba en 0 para todos los
+// alumnos pase lo que pase, lo que rompía silenciosamente la columna del
+// mismo nombre en la exportación CSV de F08 (encontrado al revisar el CSV
+// exportado con datos reales). registerActivity ya es el único punto por
+// el que pasan los tres cierres de intento (completed/failed en
+// answerQuestion, abandoned en abandonAttempt) — es el lugar correcto
+// para sumarlo una sola vez, sin duplicar la regla en cada llamador.
+export const registerActivity = async ({ userId, xpAmount = 0, durationSeconds = 0 }) => {
   const user = await User.findById(userId);
   const { currentStreak, longestStreak, lastActivityDate } = computeStreak(user);
 
   await User.updateOne(
     { _id: userId },
     {
-      $inc: { totalXp: xpAmount, weeklyXp: xpAmount },
+      $inc: { totalXp: xpAmount, weeklyXp: xpAmount, totalTimeSpentSeconds: Math.max(0, durationSeconds ?? 0) },
       $set: { currentStreak, longestStreak, lastActivityDate },
     }
   );
