@@ -17,13 +17,13 @@ export const generateRandomPin = () => String(Math.floor(1000 + Math.random() * 
 const USERNAME_RE = /^[a-z0-9_]{3,20}$/;
 const CLASS_CODE_RE = /^[A-Z0-9]{4,12}$/;
 const PIN_RE = /^\d{4}$/;
-const FULLNAME_RE = /^[\p{L}\s'-]{3,80}$/u;
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export const FULLNAME_RE = /^[\p{L}\s'-]{3,80}$/u;
+export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const collapseSpaces = (s) => s.trim().replace(/\s+/g, ' ');
+export const collapseSpaces = (s) => s.trim().replace(/\s+/g, ' ');
 
 // "Se normaliza a Title Case y se colapsan espacios múltiples" (endpoint 2).
-const toTitleCase = (s) =>
+export const toTitleCase = (s) =>
   collapseSpaces(s)
     .toLowerCase()
     .split(' ')
