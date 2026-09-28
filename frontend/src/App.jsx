@@ -17,6 +17,7 @@ import Logros from './pages/Logros.jsx';
 import Perfil from './pages/Perfil.jsx';
 import TeacherClasses from './pages/TeacherClasses.jsx';
 import TeacherClassDetail from './pages/TeacherClassDetail.jsx';
+import Resultado from './pages/Resultado.jsx';
 
 // "/" — entrada al sitio ("Redirección a /mapa o /login según sesión"): acá sí es un
 // redirect silencioso, sin pantalla. Cualquier OTRA ruta desconocida cae
@@ -42,10 +43,7 @@ function App() {
             <Route element={<AppLayout showTabs />}>
               <Route path="/mapa" element={<Mapa />} />
               <Route path="/leccion/:attemptId" element={<LessonScreen />} />
-              <Route
-                path="/resultado/:attemptId"
-                element={<FeaturePlaceholder title="Resultado del módulo" feature="F05" owner="Ambos" />}
-              />
+              <Route path="/resultado/:attemptId" element={<Resultado />} />
               <Route path="/ranking" element={<Ranking />} />
               <Route path="/logros" element={<Logros />} />
             </Route>
