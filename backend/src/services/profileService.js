@@ -6,7 +6,7 @@ import { badRequest, unauthorized, forbidden, conflict, notFound } from '../util
 const rounds = Number(process.env.BCRYPT_SALT_ROUNDS ?? 10);
 
 export const updateProfile = async (authUser, body) => {
-  const user = await User.findById(authUser.id);
+  const user = await User.findById(authUser.id).select('+pinHash +passwordHash');
   if (!user) {
     throw notFound('USER_NOT_FOUND', 'El usuario del token ya no existe.');
   }

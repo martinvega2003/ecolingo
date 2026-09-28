@@ -196,6 +196,7 @@ export const getMe = async (authUser) => {
     id: user.id,
     role: user.role,
     fullName: user.fullName,
+    username: user.username,
     classCode: user.classCode,
     totalXp: user.totalXp,
     weeklyXp: user.weeklyXp,
