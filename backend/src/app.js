@@ -5,6 +5,7 @@ import authRoutes from './routes/authRoutes.js';
 import modulesRoutes from './routes/modulesRoutes.js';
 import lessonRoutes from './routes/lessonRoutes.js';
 import teacherRoutes from './routes/teacherRoutes.js';
+import searchRoutes from './routes/searchRoutes.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 
 const app = express();
@@ -32,6 +33,9 @@ app.use('/api/v1', modulesRoutes);
 app.use('/api/v1', lessonRoutes);
 // F08 — Panel del Docente (Parte 1: endpoints 16, 17, 18, 19, 20)
 app.use('/api/v1', teacherRoutes);
+// F10 — Buscador de contenido / Glosario (Parte 1: endpoint 25; endpoint
+// 27 propuesto — ver searchController.js)
+app.use('/api/v1', searchRoutes);
 
 // 404 con el envoltorio de error estándar — literal de §0.7. Nota: el
 // código NOT_FOUND no figura en la tabla del catálogo de §0.1, aunque sí
