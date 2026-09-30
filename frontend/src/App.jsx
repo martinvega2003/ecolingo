@@ -14,6 +14,8 @@ import Mapa from './pages/Mapa.jsx';
 import LessonScreen from './pages/LessonScreen.jsx';
 import TeacherClasses from './pages/TeacherClasses.jsx';
 import TeacherClassDetail from './pages/TeacherClassDetail.jsx';
+import Buscar from './pages/Buscar.jsx';
+import Glosario from './pages/Glosario.jsx';
 
 // "/" — entrada al sitio ("Redirección a /mapa o /login según sesión"): acá sí es un
 // redirect silencioso, sin pantalla. Cualquier OTRA ruta desconocida cae
@@ -69,14 +71,11 @@ function App() {
                 path="/perfil"
                 element={<FeaturePlaceholder title="Perfil de usuario" feature="F09" owner="Persona A" />}
               />
-              <Route
-                path="/buscar"
-                element={<FeaturePlaceholder title="Buscador de contenido" feature="F10" owner="Persona B" />}
-              />
-              <Route
-                path="/glosario"
-                element={<FeaturePlaceholder title="Glosario completo" feature="F10" owner="Persona B" />}
-              />
+              <Route path="/buscar" element={<Buscar />} />
+              {/* :slug es para volver desde un resultado de /search (route:
+                  "/glosario/:slug"); Glosario también sirve /glosario a secas. */}
+              <Route path="/glosario" element={<Glosario />} />
+              <Route path="/glosario/:slug" element={<Glosario />} />
             </Route>
           </Route>
 
