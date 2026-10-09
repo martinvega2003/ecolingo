@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import Spinner from '../components/common/Spinner.jsx';
 import ErrorState from '../components/common/ErrorState.jsx';
 import Card from '../components/common/Card.jsx';
@@ -8,23 +8,31 @@ export default function Logros() {
   const [state, setState] = useState('loading');
   const [data, setData] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
+  const [reloadToken, setReloadToken] = useState(0); // cambiar este valor dispara una recarga
 
-  const load = useCallback(() => {
-    setState('loading');
-    fetchMyBadges()
-      .then((res) => {
+  // Patrón IIFE dentro del efecto (React Compiler purity rules) — mismo
+  // criterio que LessonScreen.jsx (F04) y Glosario.jsx (F10).
+  useEffect(() => {
+    let ignore = false;
+
+    (async () => {
+      setState('loading');
+      try {
+        const res = await fetchMyBadges();
+        if (ignore) return;
         setData(res);
         setState('ready');
-      })
-      .catch((err) => {
+      } catch (err) {
+        if (ignore) return;
         setErrorMessage(getErrorMessage(err));
         setState('error');
-      });
-  }, []);
+      }
+    })();
 
-  useEffect(() => {
-    load();
-  }, [load]);
+    return () => {
+      ignore = true;
+    };
+  }, [reloadToken]);
 
   if (state === 'loading') {
     return (
@@ -37,7 +45,7 @@ export default function Logros() {
   if (state === 'error') {
     return (
       <div className="p-6">
-        <ErrorState description={errorMessage} onRetry={load} />
+        <ErrorState description={errorMessage} onRetry={() => setReloadToken((t) => t + 1)} />
       </div>
     );
   }
