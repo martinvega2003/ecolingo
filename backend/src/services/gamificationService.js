@@ -4,7 +4,7 @@
 // (completed, failed o abandoned — cualquier actividad real), nunca en
 // un simple GET.
 import { User } from '../models/index.js';
-import { toLocalDateString } from '../utils/date.js';
+import { toLocalDateString, getWeekStart } from '../utils/date.js';
 
 const computeStreak = (user, now = new Date()) => {
   const today = toLocalDateString(now);
@@ -38,14 +38,27 @@ const computeStreak = (user, now = new Date()) => {
 export const registerActivity = async ({ userId, xpAmount = 0, durationSeconds = 0 }) => {
   const user = await User.findById(userId);
   const { currentStreak, longestStreak, lastActivityDate } = computeStreak(user);
+  const timeSpent = Math.max(0, durationSeconds ?? 0);
 
-  await User.updateOne(
-    { _id: userId },
-    {
-      $inc: { totalXp: xpAmount, weeklyXp: xpAmount, totalTimeSpentSeconds: Math.max(0, durationSeconds ?? 0) },
-      $set: { currentStreak, longestStreak, lastActivityDate },
-    }
-  );
+  // 🐛 D-09 — "en cada lectura o escritura de XP, si weeklyXpResetAt es
+  // anterior al lunes de la semana en curso, weeklyXp se pone en 0". Acá
+  // faltaba en la ESCRITURA: el $inc sumaba sobre el weeklyXp viejo y el
+  // siguiente reinicio perezoso (al leer /ranking o /resultado) borraba
+  // también el XP recién ganado esta semana.
+  const weekStart = getWeekStart();
+  const isWeekStale = !user.weeklyXpResetAt || user.weeklyXpResetAt < weekStart;
+
+  const update = isWeekStale
+    ? {
+        $inc: { totalXp: xpAmount, totalTimeSpentSeconds: timeSpent },
+        $set: { currentStreak, longestStreak, lastActivityDate, weeklyXp: xpAmount, weeklyXpResetAt: weekStart },
+      }
+    : {
+        $inc: { totalXp: xpAmount, weeklyXp: xpAmount, totalTimeSpentSeconds: timeSpent },
+        $set: { currentStreak, longestStreak, lastActivityDate },
+      };
+
+  await User.updateOne({ _id: userId }, update);
 
   return { currentStreak, longestStreak, lastActivityDate };
 };
