@@ -56,6 +56,14 @@ export const changePassword = async (authUser, { currentPassword, newPassword })
     throw forbidden('FORBIDDEN_ROLE', 'El solicitante es un alumno.');
   }
 
+  // Parte 1, endpoint 24: currentPassword es "Requerido" — su ausencia es
+  // un 400, no un 401 INCORRECT_CURRENT_PASSWORD.
+  if (typeof currentPassword !== 'string' || currentPassword.length === 0) {
+    throw badRequest('VALIDATION_ERROR', 'La contraseña actual es requerida.', [
+      { field: 'currentPassword', issue: 'Requerido.' },
+    ]);
+  }
+
   if (typeof newPassword !== 'string' || newPassword.length < 8) {
     throw badRequest('VALIDATION_ERROR', 'La contraseña nueva debe tener al menos 8 caracteres.', [
       { field: 'newPassword', issue: 'Mínimo 8 caracteres.' },
@@ -67,7 +75,7 @@ export const changePassword = async (authUser, { currentPassword, newPassword })
     throw notFound('USER_NOT_FOUND', 'El usuario del token ya no existe.');
   }
 
-  const matches = await bcrypt.compare(currentPassword ?? '', user.passwordHash);
+  const matches = await bcrypt.compare(currentPassword, user.passwordHash);
   if (!matches) {
     throw unauthorized('INCORRECT_CURRENT_PASSWORD', 'La contraseña actual no coincide.');
   }
