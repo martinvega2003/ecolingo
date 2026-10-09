@@ -1,20 +1,20 @@
 // F05 — Resultado del Módulo (GUIA_DE_CODIGO.md corregida, Parte 1,
 // endpoint 11). Sin colecciones nuevas: lee moduleAttempts, progress
 // (indirectamente vía módulo), userBadges y users, todos ya definidos.
+import mongoose from 'mongoose';
 import { ModuleAttempt, Module, Badge, User } from '../models/index.js';
-import { notFound, forbidden } from '../utils/apiError.js';
+import { badRequest, notFound, forbidden } from '../utils/apiError.js';
 import { getWeekStart } from '../utils/date.js';
-
-const resetStaleWeeklyXpIfNeeded = async (user) => {
-  const weekStart = getWeekStart();
-  if (!user.weeklyXpResetAt || user.weeklyXpResetAt < weekStart) {
-    user.weeklyXp = 0;
-    user.weeklyXpResetAt = weekStart;
-    await user.save();
-  }
-};
+import { getOrCreateProgress } from './progressService.js';
+import { resetStaleWeeklyXp } from './rankingService.js';
 
 export const getModuleResult = async (authUser, attemptId) => {
+  // Mismo criterio que F04 (lessonService.js) — §0.1: MALFORMED_ID. Sin
+  // esto, un id inválido explotaba en un CastError → 500.
+  if (!mongoose.Types.ObjectId.isValid(attemptId)) {
+    throw badRequest('MALFORMED_ID', 'attemptId no es un ObjectId válido.');
+  }
+
   const attempt = await ModuleAttempt.findById(attemptId);
   if (!attempt) {
     throw notFound('ATTEMPT_NOT_FOUND', 'El intento referenciado no existe.');
@@ -24,13 +24,24 @@ export const getModuleResult = async (authUser, attemptId) => {
   }
 
   const moduleDoc = await Module.findById(attempt.moduleId);
+  const requester = await User.findById(authUser.id).select('classCode');
+
+  // D-09 (reinicio semanal perezoso) aplicado a TODA la clase, igual que
+  // GET /ranking (F06). Antes se reseteaba solo al solicitante: el resto
+  // de la clase se comparaba con su weeklyXp de la semana anterior y la
+  // posición mostrada acá no coincidía con la de /ranking.
+  await resetStaleWeeklyXp(requester.classCode, getWeekStart());
   const user = await User.findById(authUser.id);
-  await resetStaleWeeklyXpIfNeeded(user);
 
   const totalQuestions = moduleDoc.questionCount;
   const accuracyPercentage = Math.round((attempt.correctCount / totalQuestions) * 100);
   const isPerfect = attempt.correctCount === totalQuestions;
-  const isFirstCompletion = attempt.xpEarned > 0;
+  // attempt.xpEarned es un acumulado PROVISORIO (lessonService.js): también
+  // sube en intentos que terminan failed/abandoned, pero esos no acreditan
+  // XP (§0.8). Lo que se informa como ganado es solo lo acreditado.
+  const isCompleted = attempt.status === 'completed';
+  const xpCredited = isCompleted ? attempt.xpEarned : 0;
+  const isFirstCompletion = isCompleted && attempt.xpEarned > 0;
 
   const badgesUnlocked = await Badge.find({ code: { $in: attempt.badgesUnlocked ?? [] } }).select(
     'code name emoji description'
@@ -54,9 +65,16 @@ export const getModuleResult = async (authUser, attemptId) => {
   };
 
   const positionCurrent = rankWithXp(user.weeklyXp);
-  const positionPrevious = rankWithXp(user.weeklyXp - attempt.xpEarned);
+  // Si el intento es de una semana anterior, su XP ya no está en el
+  // weeklyXp actual — no se resta (evita un XP hipotético negativo).
+  const xpEarnedThisWeek = attempt.finishedAt && attempt.finishedAt >= getWeekStart() ? xpCredited : 0;
+  const positionPrevious = rankWithXp(Math.max(0, user.weeklyXp - xpEarnedThisWeek));
 
   const nextModuleDoc = await Module.findOne({ order: moduleDoc.order + 1 });
+  // isUnlocked real, no fijo en true: en un intento failed el siguiente
+  // módulo puede seguir bloqueado. getOrCreateProgress (CONTRATOS_INTERNOS.md,
+  // API por módulo) re-evalúa 'locked' en cada acceso — no se duplica la regla.
+  const nextProgress = nextModuleDoc ? await getOrCreateProgress(user._id, nextModuleDoc) : null;
 
   return {
     attempt: {
@@ -78,7 +96,7 @@ export const getModuleResult = async (authUser, attemptId) => {
       xpReward: moduleDoc.xpReward,
     },
     rewards: {
-      xpEarned: attempt.xpEarned,
+      xpEarned: xpCredited,
       isFirstCompletion,
       totalXpAfter: user.totalXp,
       badgesUnlocked: badgesUnlocked.map((b) => ({
@@ -98,7 +116,7 @@ export const getModuleResult = async (authUser, attemptId) => {
           id: nextModuleDoc.id,
           order: nextModuleDoc.order,
           title: nextModuleDoc.title,
-          isUnlocked: true,
+          isUnlocked: nextProgress.status !== 'locked',
         }
       : null,
   };

@@ -5,7 +5,9 @@ import { getWeekStart } from '../utils/date.js';
 
 const SCOPE_FIELD = { weekly: 'weeklyXp', alltime: 'totalXp' };
 
-const resetStaleWeeklyXp = async (classCode, weekStart) => {
+// Exportada para F05 (resultService.js): la posición del resultado tiene que
+// salir del mismo reinicio que la de GET /ranking.
+export const resetStaleWeeklyXp = async (classCode, weekStart) => {
   await User.updateMany(
     { classCode, role: 'student', weeklyXpResetAt: { $lt: weekStart } },
     { $set: { weeklyXp: 0, weeklyXpResetAt: weekStart } }
