@@ -1,9 +1,13 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import Card from '../components/common/Card.jsx';
 import Spinner from '../components/common/Spinner.jsx';
 import ErrorState from '../components/common/ErrorState.jsx';
 import EmptyState from '../components/common/EmptyState.jsx';
 import { fetchRanking, getErrorMessage } from '../api/rankingApi.js';
+
+// Parte 3, F06: "El top 3 lleva medallas de oro, plata y bronce". Solo se
+// otorgan con XP > 0 — un 3.º puesto con 0 XP no "ganó" nada.
+const MEDALS = { 1: '🥇', 2: '🥈', 3: '🥉' };
 
 const SCOPES = [
   { value: 'weekly', label: 'Esta semana' },
@@ -15,23 +19,39 @@ export default function Ranking() {
   const [state, setState] = useState('loading');
   const [data, setData] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
+  const [reloadToken, setReloadToken] = useState(0); // cambiar este valor dispara una recarga
 
-  const load = useCallback((currentScope) => {
-    setState('loading');
-    fetchRanking(currentScope)
-      .then((res) => {
+  // Patrón IIFE dentro del efecto (React Compiler purity rules) — mismo
+  // criterio que LessonScreen.jsx (F04) y Glosario.jsx (F10).
+  useEffect(() => {
+    let ignore = false;
+
+    (async () => {
+      setState('loading');
+      try {
+        const res = await fetchRanking(scope);
+        if (ignore) return;
         setData(res);
         setState('ready');
-      })
-      .catch((err) => {
+      } catch (err) {
+        if (ignore) return;
         setErrorMessage(getErrorMessage(err));
         setState('error');
-      });
-  }, []);
+      }
+    })();
 
-  useEffect(() => {
-    load(scope);
-  }, [scope, load]);
+    return () => {
+      ignore = true;
+    };
+  }, [scope, reloadToken]);
+
+  // Parte 3, F06: "Estado vacío cuando es la única persona con XP". El
+  // endpoint siempre devuelve a todos los alumnos activos (incluido el
+  // solicitante), así que entries nunca llega vacío — el estado vacío se
+  // decide por XP, no por la longitud del array.
+  const nobodyElseHasXp =
+    state === 'ready' && data.entries.every((e) => e.isCurrentUser || e.xp === 0);
+  const ownXp = data?.currentUser?.xp ?? 0;
 
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -57,16 +77,30 @@ export default function Ranking() {
         </div>
       )}
 
-      {state === 'error' && <ErrorState description={errorMessage} onRetry={() => load(scope)} />}
+      {state === 'error' && <ErrorState description={errorMessage} onRetry={() => setReloadToken((t) => t + 1)} />}
 
-      {state === 'ready' && data.entries.length === 0 && (
-        <EmptyState
-          title="Todavía no hay nadie en el ranking"
-          description="En cuanto algún compañero de tu clase gane XP, va a aparecer acá."
-        />
+      {state === 'ready' && nobodyElseHasXp && (
+        <>
+          <EmptyState
+            title={ownXp > 0 ? 'Por ahora sos la única persona con XP' : 'Todavía nadie sumó XP'}
+            description={
+              ownXp > 0
+                ? 'En cuanto algún compañero de tu clase gane XP, va a aparecer acá para competir con vos.'
+                : 'Completá un módulo para estrenar el ranking de tu clase.'
+            }
+          />
+          {data.currentUser && (
+            <Card className="border-primary bg-primary/10">
+              <p className="text-xs text-muted">Tu posición</p>
+              <p className="text-sm text-text">
+                #{data.currentUser.position} de {data.currentUser.totalStudents} · {data.currentUser.xp} XP
+              </p>
+            </Card>
+          )}
+        </>
       )}
 
-      {state === 'ready' && data.entries.length > 0 && (
+      {state === 'ready' && !nobodyElseHasXp && (
         <>
           <div className="flex flex-col gap-2">
             {data.entries.map((entry) => (
@@ -93,7 +127,15 @@ function RankingRow({ entry }) {
     <Card className={entry.isCurrentUser ? 'border-primary bg-primary/10' : ''}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="w-6 text-center text-sm font-medium text-muted">{entry.position}</span>
+          <span className="w-6 text-center text-sm font-medium text-muted">
+            {entry.xp > 0 && MEDALS[entry.position] ? (
+              <span className="text-lg" aria-label={`Puesto ${entry.position}`}>
+                {MEDALS[entry.position]}
+              </span>
+            ) : (
+              entry.position
+            )}
+          </span>
           <div>
             <p className="text-sm text-text">
               {entry.fullName} {entry.isCurrentUser && <span className="text-xs text-primary">(vos)</span>}
