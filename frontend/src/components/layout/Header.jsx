@@ -3,9 +3,9 @@ import { useAuth } from '../../hooks/useAuth.js';
 
 // Cabecera de F02 — nombre, XP y racha reales para el alumno (criterio de
 // aceptación de F02: "la cabecera muestra nombre, XP y racha reales"),
-// enlaces a Perfil/Buscar (guard student|teacher en §0.12 — ambos roles
-// entran) y logout. El docente no tiene totalXp/currentStreak en el
-// modelo User (Parte 2): no se muestran para ese rol.
+// enlaces a Perfil/Buscar/Glosario (guard student|teacher en §0.12 — ambos
+// roles entran a los tres) y logout. El docente no tiene totalXp/
+// currentStreak en el modelo User (Parte 2): no se muestran para ese rol.
 const Header = () => {
   const { user, logout } = useAuth();
   const isStudent = user?.role === 'student';
@@ -30,6 +30,12 @@ const Header = () => {
           className={({ isActive }) => (isActive ? 'font-medium text-text' : 'text-muted hover:text-text')}
         >
           Buscar
+        </NavLink>
+        <NavLink
+          to="/glosario"
+          className={({ isActive }) => (isActive ? 'font-medium text-text' : 'text-muted hover:text-text')}
+        >
+          Glosario
         </NavLink>
         <NavLink
           to="/perfil"

@@ -4,6 +4,12 @@ import mongoose from 'mongoose';
 import authRoutes from './routes/authRoutes.js';
 import modulesRoutes from './routes/modulesRoutes.js';
 import lessonRoutes from './routes/lessonRoutes.js';
+import teacherRoutes from './routes/teacherRoutes.js';
+import searchRoutes from './routes/searchRoutes.js';
+import rankingRoutes from './routes/rankingRoutes.js';
+import badgesRoutes from './routes/badgesRoutes.js';
+import profileRoutes from './routes/profileRoutes.js';
+import resultRoutes from './routes/resultRoutes.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 
 const app = express();
@@ -29,6 +35,19 @@ app.use('/api/v1', authRoutes);
 app.use('/api/v1', modulesRoutes);
 // F04 — Motor de Lección (Parte 1: endpoints 7, 8, 9, 10)
 app.use('/api/v1', lessonRoutes);
+// F08 — Panel del Docente (Parte 1: endpoints 16, 17, 18, 19, 20)
+app.use('/api/v1', teacherRoutes);
+// F10 — Buscador de contenido / Glosario (Parte 1: endpoint 25; endpoint
+// 27 propuesto — ver searchController.js)
+app.use('/api/v1', searchRoutes);
+// F06 — Ranking (Parte 1: endpoint 15)
+app.use('/api/v1', rankingRoutes);
+// F07 — Insignias (Parte 1: endpoints 13, 14)
+app.use('/api/v1', badgesRoutes);
+// F09 — Perfil (Parte 1: endpoints 23, 24)
+app.use('/api/v1', profileRoutes);
+// F05 — Resultado del Módulo (Parte 1: endpoint 11)
+app.use('/api/v1', resultRoutes);
 
 // 404 con el envoltorio de error estándar — literal de §0.7. Nota: el
 // código NOT_FOUND no figura en la tabla del catálogo de §0.1, aunque sí

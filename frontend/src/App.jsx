@@ -7,16 +7,22 @@ import { homeRouteForRole } from './utils/routes.js';
 import ProtectedRoute from './components/common/ProtectedRoute.jsx';
 import PublicOnlyRoute from './components/common/PublicOnlyRoute.jsx';
 import AppLayout from './components/layout/AppLayout.jsx';
-import FeaturePlaceholder from './components/common/FeaturePlaceholder.jsx';
 import NotFoundPage from './components/common/NotFoundPage.jsx';
 import Login from './pages/Login.jsx';
 import Mapa from './pages/Mapa.jsx';
 import LessonScreen from './pages/LessonScreen.jsx';
+import Ranking from './pages/Ranking.jsx';
+import Logros from './pages/Logros.jsx';
+import Perfil from './pages/Perfil.jsx';
+import TeacherClasses from './pages/TeacherClasses.jsx';
+import TeacherClassDetail from './pages/TeacherClassDetail.jsx';
+import Buscar from './pages/Buscar.jsx';
+import Glosario from './pages/Glosario.jsx';
+import Resultado from './pages/Resultado.jsx';
 
-// "/" — entrada al sitio. Honra literal el texto de §0.12 para el
-// wildcard ("Redirección a /mapa o /login según sesión"): acá sí es un
+// "/" — entrada al sitio ("Redirección a /mapa o /login según sesión"): acá sí es un
 // redirect silencioso, sin pantalla. Cualquier OTRA ruta desconocida cae
-// en NotFoundPage (ver la nota de la contradicción ahí).
+// en NotFoundPage.
 const RootRedirect = () => {
   const { isAuthenticated, isLoading, user } = useAuth();
   if (isLoading) return null;
@@ -38,50 +44,29 @@ function App() {
             <Route element={<AppLayout showTabs />}>
               <Route path="/mapa" element={<Mapa />} />
               <Route path="/leccion/:attemptId" element={<LessonScreen />} />
-              <Route
-                path="/resultado/:attemptId"
-                element={<FeaturePlaceholder title="Resultado del módulo" feature="F05" owner="Ambos" />}
-              />
-              <Route
-                path="/ranking"
-                element={<FeaturePlaceholder title="Ranking de Clase" feature="F06" owner="Persona A" />}
-              />
-              <Route
-                path="/logros"
-                element={<FeaturePlaceholder title="Logros e Insignias" feature="F07" owner="Persona A" />}
-              />
+              <Route path="/resultado/:attemptId" element={<Resultado />} />
+              <Route path="/ranking" element={<Ranking />} />
+              <Route path="/logros" element={<Logros />} />
             </Route>
           </Route>
 
           {/* Docente — guard: teacher, sin tabs */}
           <Route element={<ProtectedRoute allowedRoles={['teacher']} />}>
             <Route element={<AppLayout />}>
-              <Route
-                path="/docente"
-                element={<FeaturePlaceholder title="Panel del Docente" feature="F08" owner="Persona B" />}
-              />
-              <Route
-                path="/docente/clase/:classCode"
-                element={<FeaturePlaceholder title="Detalle de clase" feature="F08" owner="Persona B" />}
-              />
+              <Route path="/docente" element={<TeacherClasses />} />
+              <Route path="/docente/clase/:classCode" element={<TeacherClassDetail />} />
             </Route>
           </Route>
 
           {/* Ambos roles — guard: cualquier sesión válida (student|teacher en §0.12), sin tabs */}
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
-              <Route
-                path="/perfil"
-                element={<FeaturePlaceholder title="Perfil de usuario" feature="F09" owner="Persona A" />}
-              />
-              <Route
-                path="/buscar"
-                element={<FeaturePlaceholder title="Buscador de contenido" feature="F10" owner="Persona B" />}
-              />
-              <Route
-                path="/glosario"
-                element={<FeaturePlaceholder title="Glosario completo" feature="F10" owner="Persona B" />}
-              />
+              <Route path="/perfil" element={<Perfil />} />
+              <Route path="/buscar" element={<Buscar />} />
+              {/* :slug es para volver desde un resultado de /search (route:
+                  "/glosario/:slug"); Glosario también sirve /glosario a secas. */}
+              <Route path="/glosario" element={<Glosario />} />
+              <Route path="/glosario/:slug" element={<Glosario />} />
             </Route>
           </Route>
 
