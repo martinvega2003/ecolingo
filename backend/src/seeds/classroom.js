@@ -21,12 +21,12 @@ export const seedClassroom = async () => {
   }
 
   await Class.updateOne(
-    { code: 'ECO2025' },
+    { code: 'ECO2026' },
     {
       $set: { name: 'Grupo piloto — 3.º Curso', teacherId: teacher._id, isActive: true },
       $setOnInsert: { isPretestEnabled: false, isPosttestEnabled: false },
     },
     { upsert: true }
   );
-  console.log('✅ Clase ECO2025 cargada');
+  console.log('✅ Clase ECO2026 cargada');
 };

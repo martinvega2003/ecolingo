@@ -13,14 +13,20 @@ import client, { getErrorMessage } from '../api/client';
  * página), reemplazar los bloques de abajo por ese componente en vez de
  * duplicar el patrón.
  */
+// Encuesta de satisfacción del piloto (Google Forms). Es un enlace externo
+// fijo: no pasa por la API ni toca ningún endpoint ni esquema.
+const SATISFACTION_SURVEY_URL =
+  'https://docs.google.com/forms/d/e/1FAIpQLSfCUm-YlPFvmqRQnBYfTsYdUVE4LAVbqBUG0py5EbkEz672Sg/viewform';
+
 export default function Mapa() {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [state, setState] = useState('loading'); // loading | ready | error
   const [errorMessage, setErrorMessage] = useState('');
 
-  const load = useCallback(() => {
-    setState('loading');
+  // El estado inicial ya es 'loading', así que la primera carga no necesita
+  // setState síncrono dentro del efecto: solo se actualiza en los callbacks.
+  const fetchModules = useCallback(() => {
     client
       .get('/modules')
       .then((res) => {
@@ -33,9 +39,15 @@ export default function Mapa() {
       });
   }, []);
 
+  // Reintento manual (botón "Reintentar"): vuelve a 'loading' y recarga.
+  const load = () => {
+    setState('loading');
+    fetchModules();
+  };
+
   useEffect(() => {
-    load();
-  }, [load]);
+    fetchModules();
+  }, [fetchModules]);
 
   const handleModuleClick = async (mod) => {
     if (mod.status === 'locked') return; // no clickeable — criterio de aceptación
@@ -97,6 +109,29 @@ export default function Mapa() {
           <ModuleRow key={mod.id} mod={mod} onClick={() => handleModuleClick(mod)} />
         ))}
       </div>
+
+      {/* Solo cuando el alumno completó los módulos: el servidor ya cuenta
+          completedModules/totalModules en summary (Endpoint 5). */}
+      {summary.totalModules > 0 && summary.completedModules === summary.totalModules && <SatisfactionCard />}
+    </div>
+  );
+}
+
+function SatisfactionCard() {
+  return (
+    <div className="mt-6 rounded-xl border-hair border-accent bg-surface p-4">
+      <p className="text-text text-sm font-medium">¡Completaste todos los módulos! ¿Qué te pareció Ecolingo?</p>
+      <p className="text-muted text-xs mt-1">
+        Tu opinión nos ayuda a mejorar la app. Contanos en una encuesta corta cómo fue tu experiencia.
+      </p>
+      <a
+        href={SATISFACTION_SURVEY_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-block mt-3 text-xs font-medium text-accent px-3 py-1.5 rounded-lg border-hair border-accent"
+      >
+        Dejar mi opinión
+      </a>
     </div>
   );
 }

@@ -14,6 +14,10 @@ const LessonScreen = () => {
 
   const [attempt, setAttempt] = useState(null);
   const [question, setQuestion] = useState(null);
+  // La respuesta del servidor ya trae la siguiente pregunta, pero no se
+  // muestra hasta que el alumno toca "Siguiente": mientras tanto `question`
+  // sigue siendo la que acaba de responder, junto con su feedback.
+  const [nextQuestion, setNextQuestion] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [feedback, setFeedback] = useState(null);
@@ -40,6 +44,7 @@ const LessonScreen = () => {
 
         setAttempt(data.attempt);
         setQuestion(data.question);
+        setNextQuestion(null);
         setFeedback(null);
         questionStartedAt.current = now();
       } catch (err) {
@@ -76,7 +81,7 @@ const LessonScreen = () => {
       });
       setFeedback(data.feedback);
       setAttempt(data.attempt);
-      setQuestion(data.isFinished ? null : data.nextQuestion);
+      setNextQuestion(data.isFinished ? null : data.nextQuestion);
     } catch (err) {
       const code = err.response?.data?.error?.code;
       if (code === 'ATTEMPT_ALREADY_FINISHED' || code === 'QUESTION_ALREADY_ANSWERED') {
@@ -96,6 +101,13 @@ const LessonScreen = () => {
       navigate(`/resultado/${attemptId}`, { replace: true });
       return;
     }
+    if (!nextQuestion) {
+      // No debería pasar con el intento en curso; si pasa, se pide el estado real.
+      reload();
+      return;
+    }
+    setQuestion(nextQuestion);
+    setNextQuestion(null);
     setFeedback(null);
     questionStartedAt.current = now();
   };
@@ -148,9 +160,9 @@ const LessonScreen = () => {
       </div>
 
       <ProgressBar
-        value={attempt.currentQuestionOrder}
+        value={question?.order ?? attempt.currentQuestionOrder}
         max={attempt.totalQuestions}
-        label={`Pregunta ${attempt.currentQuestionOrder} de ${attempt.totalQuestions}`}
+        label={`Pregunta ${question?.order ?? attempt.currentQuestionOrder} de ${attempt.totalQuestions}`}
       />
 
       {question && (
