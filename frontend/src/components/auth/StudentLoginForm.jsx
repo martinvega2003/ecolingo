@@ -115,7 +115,7 @@ const StudentLoginForm = () => {
           maxLength={12}
           value={form.classCode}
           onChange={handleChange('classCode')}
-          placeholder="ECO2025"
+          placeholder="ECO2026"
           className="rounded-md border border-hair border-muted bg-surface px-3 py-2 uppercase text-text outline-none focus:border-info"
         />
       </label>
