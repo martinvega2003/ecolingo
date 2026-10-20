@@ -1,6 +1,7 @@
 // GUIA_DE_CODIGO.md v2.2 — Parte 2
-// 5 módulos, 17 subtemas, 34 preguntas, 1.700 XP totales, ~23 min —
-// aprobado por el tutor el 27/8/2026.
+// 5 módulos, 17 subtemas, 40 preguntas (8 por módulo), 2.000 XP totales,
+// ~27 min. Ajuste de la estructura aprobada el 27/8/2026 (34 preguntas,
+// 1.700 XP): los módulos 2, 3 y 5 pasan de 6 a 8 preguntas.
 //
 // D-16 revisada: F11 se descartó, no hay theoryContent acá.
 import { Module } from '../models/index.js';
@@ -23,9 +24,9 @@ export const MODULES = [
     title: 'Presupuesto',
     description: 'Regla 50/30/20, gastos fijos y variables, balance ingreso-gasto',
     keyConcepts: ['Regla 50/30/20', 'Gastos fijos vs. variables', 'Balance ingreso-gasto'],
-    questionCount: 6,
+    questionCount: 8,
     xpPerCorrectAnswer: 50,
-    xpReward: 300,
+    xpReward: 400,
     badgeCode: 'PRESUPUESTADOR',
   },
   {
@@ -34,9 +35,9 @@ export const MODULES = [
     title: 'Crédito y deuda',
     description: 'Tasa de interés, método avalancha e historial crediticio',
     keyConcepts: ['Tasa de interés', 'Método avalancha', 'Historial crediticio'],
-    questionCount: 6,
+    questionCount: 8,
     xpPerCorrectAnswer: 50,
-    xpReward: 300,
+    xpReward: 400,
     badgeCode: 'SIN_DEUDAS',
   },
   {
@@ -56,9 +57,9 @@ export const MODULES = [
     title: 'Planificación financiera',
     description: 'Corto vs. largo plazo, metas SMART y revisión del plan',
     keyConcepts: ['Corto vs. largo plazo', 'Metas SMART', 'Revisión del plan'],
-    questionCount: 6,
+    questionCount: 8,
     xpPerCorrectAnswer: 50,
-    xpReward: 300,
+    xpReward: 400,
     badgeCode: 'PLANIFICADOR',
   },
 ];

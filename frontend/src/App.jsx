@@ -58,9 +58,11 @@ function App() {
             </Route>
           </Route>
 
-          {/* Ambos roles — guard: cualquier sesión válida (student|teacher en §0.12), sin tabs */}
+          {/* Ambos roles — guard: cualquier sesión válida (student|teacher en §0.12).
+              El alumno conserva los tabs Módulos/Ranking/Logros para poder volver
+              a /mapa; el docente no tiene tabs (vuelve con el enlace de la cabecera). */}
           <Route element={<ProtectedRoute />}>
-            <Route element={<AppLayout />}>
+            <Route element={<AppLayout tabsForStudents />}>
               <Route path="/perfil" element={<Perfil />} />
               <Route path="/buscar" element={<Buscar />} />
               {/* :slug es para volver desde un resultado de /search (route:

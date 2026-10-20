@@ -1,19 +1,26 @@
-import { NavLink } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.js';
+import { homeRouteForRole } from '../../utils/routes.js';
 
 // Cabecera de F02 — nombre, XP y racha reales para el alumno (criterio de
 // aceptación de F02: "la cabecera muestra nombre, XP y racha reales"),
 // enlaces a Perfil/Buscar/Glosario (guard student|teacher en §0.12 — ambos
 // roles entran a los tres) y logout. El docente no tiene totalXp/
 // currentStreak en el modelo User (Parte 2): no se muestran para ese rol.
+// El nombre "Ecolingo" es un enlace al inicio del rol (alumno → /mapa,
+// docente → /docente) y siempre está visible; el docente, que no tiene
+// tabs, además tiene el enlace "Mis clases".
 const Header = () => {
   const { user, logout } = useAuth();
   const isStudent = user?.role === 'student';
+  const homeRoute = homeRouteForRole(user?.role);
 
   return (
     <header className="flex flex-wrap items-center justify-between gap-3 border-b border-hair border-surface bg-bg px-4 py-3">
       <div className="flex items-center gap-3">
-        <span className="font-semibold text-text">Ecolingo</span>
+        <Link to={homeRoute} aria-label="Ir al inicio" className="font-semibold text-text transition-colors hover:text-primary">
+          Ecolingo
+        </Link>
         <span className="text-sm text-muted">{user?.fullName}</span>
       </div>
 
@@ -25,6 +32,14 @@ const Header = () => {
       )}
 
       <nav className="flex items-center gap-3 text-sm">
+        {!isStudent && (
+          <NavLink
+            to={homeRoute}
+            className={({ isActive }) => (isActive ? 'font-medium text-text' : 'text-muted hover:text-text')}
+          >
+            Mis clases
+          </NavLink>
+        )}
         <NavLink
           to="/buscar"
           className={({ isActive }) => (isActive ? 'font-medium text-text' : 'text-muted hover:text-text')}
