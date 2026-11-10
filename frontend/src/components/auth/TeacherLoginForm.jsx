@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowRight, Loader2, Lock, Mail, TriangleAlert } from 'lucide-react';
+import Input from '../common/Input.jsx';
 import { useAuth } from '../../hooks/useAuth.js';
 import { homeRouteForRole } from '../../utils/routes.js';
 
@@ -39,45 +42,60 @@ const TeacherLoginForm = () => {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <label className="flex flex-col gap-1 text-sm text-muted">
-        Email
-        <input
-          type="email"
-          required
-          autoComplete="email"
-          value={form.email}
-          onChange={handleChange('email')}
-          placeholder="docente@colegio.edu.py"
-          className="rounded-md border border-hair border-muted bg-surface px-3 py-2 text-text outline-none focus:border-info"
-        />
-      </label>
+      <Input
+        label="Email"
+        icon={Mail}
+        type="email"
+        required
+        autoComplete="email"
+        value={form.email}
+        onChange={handleChange('email')}
+        placeholder="docente@colegio.edu.py"
+      />
 
-      <label className="flex flex-col gap-1 text-sm text-muted">
-        Contraseña
-        <input
-          type="password"
-          required
-          minLength={8}
-          autoComplete="current-password"
-          value={form.password}
-          onChange={handleChange('password')}
-          placeholder="••••••••"
-          className="rounded-md border border-hair border-muted bg-surface px-3 py-2 text-text outline-none focus:border-info"
-        />
-      </label>
+      <Input
+        label="Contraseña"
+        icon={Lock}
+        type="password"
+        revealable
+        required
+        minLength={8}
+        autoComplete="current-password"
+        value={form.password}
+        onChange={handleChange('password')}
+        placeholder="••••••••"
+      />
 
-      {error && (
-        <p role="alert" className="text-sm text-danger">
-          {error}
-        </p>
-      )}
+      <AnimatePresence>
+        {error && (
+          <motion.p
+            role="alert"
+            initial={{ opacity: 0, x: 0 }}
+            animate={{ opacity: 1, x: [0, -6, 6, -4, 4, 0] }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.35 }}
+            className="flex items-start gap-2 rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger"
+          >
+            <TriangleAlert aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
+            {error}
+          </motion.p>
+        )}
+      </AnimatePresence>
 
       <button
         type="submit"
         disabled={isSubmitting}
-        className="rounded-md bg-primary px-4 py-2 font-medium text-text transition-opacity disabled:opacity-60"
+        className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-semibold text-text transition-all hover:bg-primary/85 active:scale-[0.97] disabled:opacity-60 disabled:active:scale-100"
       >
-        {isSubmitting ? 'Ingresando…' : 'Entrar'}
+        {isSubmitting ? (
+          <>
+            <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> Ingresando…
+          </>
+        ) : (
+          <>
+            Entrar <ArrowRight aria-hidden="true" className="h-4 w-4" />
+          </>
+        )}
       </button>
     </form>
   );
