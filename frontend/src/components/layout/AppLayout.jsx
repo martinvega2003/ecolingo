@@ -1,4 +1,5 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuth } from '../../hooks/useAuth.js';
 import Header from './Header.jsx';
 import StudentTabs from './StudentTabs.jsx';
@@ -13,16 +14,28 @@ import StudentTabs from './StudentTabs.jsx';
 //   tabs: vuelve a su panel con el enlace de la cabecera.
 // max-w-3xl evita que el contenido quede demasiado estirado en pantallas
 // grandes (criterio de aceptación: "layout correcto en 1280 px").
+// Transición: el contenido entra con un fundido corto al cambiar de sección.
+// Se usa el primer segmento de la ruta como clave (no la ruta completa) para
+// que /glosario y /glosario/:slug no se remonten ni recarguen.
 const AppLayout = ({ showTabs = false, tabsForStudents = false }) => {
   const { user } = useAuth();
+  const location = useLocation();
   const withTabs = showTabs || (tabsForStudents && user?.role === 'student');
+  const sectionKey = location.pathname.split('/')[1] || 'root';
 
   return (
     <div className="min-h-screen bg-bg text-text">
       <Header />
       {withTabs && <StudentTabs />}
-      <main className={`mx-auto max-w-3xl ${withTabs ? 'pb-16 md:pb-0' : ''}`}>
-        <Outlet />
+      <main className={`mx-auto max-w-3xl ${withTabs ? 'pb-20 md:pb-4' : 'pb-4'}`}>
+        <motion.div
+          key={sectionKey}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.22, ease: 'easeOut' }}
+        >
+          <Outlet />
+        </motion.div>
       </main>
     </div>
   );
