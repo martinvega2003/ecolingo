@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { CircleCheck, KeyRound, Save } from 'lucide-react';
 import Card from '../components/common/Card.jsx';
 import Button from '../components/common/Button.jsx';
 import { useAuth } from '../hooks/useAuth.js';
@@ -10,7 +12,7 @@ export default function Perfil() {
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <h1 className="text-lg font-medium text-text">Perfil de usuario</h1>
+      <h1 className="text-lg font-bold text-text">Perfil de usuario</h1>
       <ProfileForm user={user} refreshUser={refreshUser} isTeacher={isTeacher} />
       {isTeacher && <PasswordForm />}
     </div>
@@ -78,10 +80,10 @@ function ProfileForm({ user, refreshUser, isTeacher }) {
         )}
 
         <div className="flex items-center gap-3">
-          <Button type="submit" disabled={status === 'saving'}>
+          <Button type="submit" icon={Save} disabled={status === 'saving'}>
             {status === 'saving' ? 'Guardando…' : 'Guardar cambios'}
           </Button>
-          {status === 'saved' && <span className="text-sm text-accent">✓ Guardado</span>}
+          {status === 'saved' && <SavedBadge text="Guardado" />}
         </div>
 
         {status === 'error' && <p className="text-sm text-danger">{errorMessage}</p>}
@@ -129,7 +131,7 @@ function PasswordForm() {
 
   return (
     <Card>
-      <h2 className="mb-3 text-sm font-medium text-text">Cambiar contraseña</h2>
+      <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-text"><KeyRound aria-hidden="true" className="h-4 w-4 text-muted" />Cambiar contraseña</h2>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
           <label htmlFor="currentPassword" className="text-xs text-muted">Contraseña actual</label>
@@ -157,14 +159,29 @@ function PasswordForm() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Button type="submit" variant="secondary" disabled={status === 'saving'}>
+          <Button type="submit" variant="secondary" icon={KeyRound} disabled={status === 'saving'}>
             {status === 'saving' ? 'Guardando…' : 'Cambiar contraseña'}
           </Button>
-          {status === 'saved' && <span className="text-sm text-accent">✓ Contraseña actualizada</span>}
+          {status === 'saved' && <SavedBadge text="Contraseña actualizada" />}
         </div>
 
         {status === 'error' && <p className="text-sm text-danger">{errorMessage}</p>}
       </form>
     </Card>
+  );
+}
+
+// Confirmación visual al guardar (criterio de F09): el check aparece con un pequeño "pop".
+function SavedBadge({ text }) {
+  return (
+    <motion.span
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 16 }}
+      className="inline-flex items-center gap-1.5 text-sm font-medium text-accent"
+    >
+      <CircleCheck aria-hidden="true" className="h-4 w-4" />
+      {text}
+    </motion.span>
   );
 }

@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowRight, Hash, Lock, Loader2, TriangleAlert, User, UserRound } from 'lucide-react';
+import Input from '../common/Input.jsx';
 import { useAuth } from '../../hooks/useAuth.js';
 import { homeRouteForRole } from '../../utils/routes.js';
 
@@ -54,100 +57,128 @@ const StudentLoginForm = () => {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <div className="flex rounded-md border border-hair border-muted p-1 text-sm">
-        <button
-          type="button"
-          onClick={() => handleModeChange('returning')}
-          className={`flex-1 rounded px-3 py-1.5 transition-colors ${
-            mode === 'returning' ? 'bg-primary text-text' : 'text-muted'
-          }`}
-        >
-          Ya tengo cuenta
-        </button>
-        <button
-          type="button"
-          onClick={() => handleModeChange('new')}
-          className={`flex-1 rounded px-3 py-1.5 transition-colors ${
-            mode === 'new' ? 'bg-primary text-text' : 'text-muted'
-          }`}
-        >
-          Soy nuevo
-        </button>
+      <div className="relative flex rounded-lg border border-hair border-muted p-1 text-sm">
+        {[
+          { value: 'returning', label: 'Ya tengo cuenta' },
+          { value: 'new', label: 'Soy nuevo' },
+        ].map((m) => (
+          <button
+            key={m.value}
+            type="button"
+            onClick={() => handleModeChange(m.value)}
+            className={`relative flex-1 rounded-md px-3 py-1.5 font-medium transition-colors ${
+              mode === m.value ? 'text-text' : 'text-muted hover:text-text'
+            }`}
+          >
+            {mode === m.value && (
+              <motion.span
+                layoutId="student-mode-pill"
+                className="absolute inset-0 rounded-md bg-primary"
+                transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+              />
+            )}
+            <span className="relative">{m.label}</span>
+          </button>
+        ))}
       </div>
 
-      <label className="flex flex-col gap-1 text-sm text-muted">
-        Usuario
-        <input
-          type="text"
-          required
-          minLength={3}
-          maxLength={20}
-          autoComplete="username"
-          value={form.username}
-          onChange={handleChange('username')}
-          placeholder="ana_r"
-          className="rounded-md border border-hair border-muted bg-surface px-3 py-2 text-text outline-none focus:border-info"
-        />
-      </label>
+      <Input
+        label="Usuario"
+        icon={User}
+        type="text"
+        required
+        minLength={3}
+        maxLength={20}
+        autoComplete="username"
+        value={form.username}
+        onChange={handleChange('username')}
+        placeholder="ana_r"
+      />
 
-      {mode === 'new' && (
-        <label className="flex flex-col gap-1 text-sm text-muted">
-          Nombre completo
-          <input
-            type="text"
-            required
-            minLength={3}
-            maxLength={80}
-            value={form.fullName}
-            onChange={handleChange('fullName')}
-            placeholder="Ana Rodríguez"
-            className="rounded-md border border-hair border-muted bg-surface px-3 py-2 text-text outline-none focus:border-info"
-          />
-        </label>
-      )}
+      <AnimatePresence initial={false}>
+        {mode === 'new' && (
+          <motion.div
+            key="fullName"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <Input
+              label="Nombre completo"
+              icon={UserRound}
+              type="text"
+              required
+              minLength={3}
+              maxLength={80}
+              value={form.fullName}
+              onChange={handleChange('fullName')}
+              placeholder="Ana Rodríguez"
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <label className="flex flex-col gap-1 text-sm text-muted">
-        Código de clase
-        <input
-          type="text"
-          required
-          minLength={4}
-          maxLength={12}
-          value={form.classCode}
-          onChange={handleChange('classCode')}
-          placeholder="ECO2026"
-          className="rounded-md border border-hair border-muted bg-surface px-3 py-2 uppercase text-text outline-none focus:border-info"
-        />
-      </label>
+      <Input
+        label="Código de clase"
+        icon={Hash}
+        type="text"
+        required
+        minLength={4}
+        maxLength={12}
+        value={form.classCode}
+        onChange={handleChange('classCode')}
+        placeholder="ECO2026"
+        inputClassName="uppercase"
+      />
 
-      <label className="flex flex-col gap-1 text-sm text-muted">
-        PIN (4 dígitos)
-        <input
-          type="password"
-          inputMode="numeric"
-          pattern="[0-9]*"
-          required
-          minLength={4}
-          maxLength={4}
-          value={form.pin}
-          onChange={handleChange('pin')}
-          placeholder="••••"
-          className="rounded-md border border-hair border-muted bg-surface px-3 py-2 tracking-[0.5em] text-text outline-none focus:border-info"
-        />
-      </label>
+      <Input
+        label="PIN (4 dígitos)"
+        icon={Lock}
+        type="password"
+        revealable
+        inputMode="numeric"
+        pattern="[0-9]*"
+        required
+        minLength={4}
+        maxLength={4}
+        value={form.pin}
+        onChange={handleChange('pin')}
+        placeholder="••••"
+        inputClassName="tracking-[0.4em]"
+      />
 
-      {error && (
-        <p role="alert" className="text-sm text-danger">
-          {error}
-        </p>
-      )}
+      <AnimatePresence>
+        {error && (
+          <motion.p
+            role="alert"
+            initial={{ opacity: 0, x: 0 }}
+            animate={{ opacity: 1, x: [0, -6, 6, -4, 4, 0] }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.35 }}
+            className="flex items-start gap-2 rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger"
+          >
+            <TriangleAlert aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
+            {error}
+          </motion.p>
+        )}
+      </AnimatePresence>
 
       <button
         type="submit"
         disabled={isSubmitting}
-        className="rounded-md bg-primary px-4 py-2 font-medium text-text transition-opacity disabled:opacity-60"
+        className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-semibold text-text transition-all hover:bg-primary/85 active:scale-[0.97] disabled:opacity-60 disabled:active:scale-100"
       >
-        {isSubmitting ? 'Ingresando…' : mode === 'new' ? 'Crear cuenta' : 'Entrar'}
+        {isSubmitting ? (
+          <>
+            <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> Ingresando…
+          </>
+        ) : (
+          <>
+            {mode === 'new' ? 'Crear cuenta' : 'Entrar'} <ArrowRight aria-hidden="true" className="h-4 w-4" />
+          </>
+        )}
       </button>
     </form>
   );

@@ -4,6 +4,7 @@
 // cargados: no vuelve a llamar a /search.
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams } from 'react-router-dom';
+import { BookOpen, BookX, Search } from 'lucide-react';
 import Spinner from '../components/common/Spinner.jsx';
 import ErrorState from '../components/common/ErrorState.jsx';
 import EmptyState from '../components/common/EmptyState.jsx';
@@ -99,20 +100,28 @@ export default function Glosario() {
   return (
     <div className="flex flex-col gap-4 p-4">
       <div>
-        <h1 className="text-lg font-medium text-text">Glosario</h1>
+        <h1 className="flex items-center gap-2 text-lg font-bold text-text">
+          <BookOpen aria-hidden="true" className="h-5 w-5 text-info" />
+          Glosario
+        </h1>
         <p className="text-sm text-muted">Todos los términos de economía personal del curso.</p>
       </div>
 
-      <input
-        type="text"
-        value={filter}
-        onChange={(e) => setFilter(e.target.value)}
-        placeholder="Filtrar por palabra…"
-        className="rounded-lg border border-hair border-muted bg-surface px-4 py-2 text-sm text-text placeholder:text-muted focus:border-info focus:outline-none"
-      />
+      <div className="relative">
+        <Search aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+        <input
+          type="text"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          placeholder="Filtrar por palabra…"
+          aria-label="Filtrar el glosario"
+          className="w-full rounded-xl border border-hair border-muted bg-surface py-2.5 pl-10 pr-4 text-sm text-text transition-colors placeholder:text-muted focus:border-info focus:outline-none"
+        />
+      </div>
 
       {filteredTerms.length === 0 ? (
         <EmptyState
+          icon={BookX}
           title="Ningún término coincide"
           description="Probá con otra palabra, o borrá el filtro para ver el glosario completo."
         />
@@ -124,7 +133,7 @@ export default function Glosario() {
               {group.terms.map((term) => (
                 <div key={term.id} ref={term.slug === slug ? highlightRef : undefined}>
                   <Card className={term.slug === slug ? 'border-info' : ''}>
-                    <p className="text-sm font-medium text-text">{term.term}</p>
+                    <p className="text-sm font-semibold text-text">{term.term}</p>
                     <p className="mt-1 text-xs text-muted">{term.definition}</p>
                   </Card>
                 </div>

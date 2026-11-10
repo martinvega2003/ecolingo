@@ -1,6 +1,7 @@
 // v2.2 (D-16 revisada): se sacó la ruta /leccion/:moduleId/teoria — F11
 // se descartó, no hay pantalla de teoría.
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { MotionConfig } from 'framer-motion';
 import { AuthProvider } from './context/AuthProvider.jsx';
 import { useAuth } from './hooks/useAuth.js';
 import { homeRouteForRole } from './utils/routes.js';
@@ -31,52 +32,56 @@ const RootRedirect = () => {
 
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          {/* Público — §0.12 */}
-          <Route element={<PublicOnlyRoute />}>
-            <Route path="/login" element={<Login />} />
-          </Route>
-
-          {/* Alumno — guard: student, con tabs Módulos/Ranking/Logros */}
-          <Route element={<ProtectedRoute allowedRoles={['student']} />}>
-            <Route element={<AppLayout showTabs />}>
-              <Route path="/mapa" element={<Mapa />} />
-              <Route path="/leccion/:attemptId" element={<LessonScreen />} />
-              <Route path="/resultado/:attemptId" element={<Resultado />} />
-              <Route path="/ranking" element={<Ranking />} />
-              <Route path="/logros" element={<Logros />} />
+    // reducedMotion="user": si el sistema pide reducir movimiento, framer-motion
+    // desactiva las animaciones de transform/escala (accesibilidad).
+    <MotionConfig reducedMotion="user">
+      <BrowserRouter>
+        <AuthProvider>
+          <Routes>
+            {/* Público — §0.12 */}
+            <Route element={<PublicOnlyRoute />}>
+              <Route path="/login" element={<Login />} />
             </Route>
-          </Route>
 
-          {/* Docente — guard: teacher, sin tabs */}
-          <Route element={<ProtectedRoute allowedRoles={['teacher']} />}>
-            <Route element={<AppLayout />}>
-              <Route path="/docente" element={<TeacherClasses />} />
-              <Route path="/docente/clase/:classCode" element={<TeacherClassDetail />} />
+            {/* Alumno — guard: student, con tabs Módulos/Ranking/Logros */}
+            <Route element={<ProtectedRoute allowedRoles={['student']} />}>
+              <Route element={<AppLayout showTabs />}>
+                <Route path="/mapa" element={<Mapa />} />
+                <Route path="/leccion/:attemptId" element={<LessonScreen />} />
+                <Route path="/resultado/:attemptId" element={<Resultado />} />
+                <Route path="/ranking" element={<Ranking />} />
+                <Route path="/logros" element={<Logros />} />
+              </Route>
             </Route>
-          </Route>
 
-          {/* Ambos roles — guard: cualquier sesión válida (student|teacher en §0.12).
-              El alumno conserva los tabs Módulos/Ranking/Logros para poder volver
-              a /mapa; el docente no tiene tabs (vuelve con el enlace de la cabecera). */}
-          <Route element={<ProtectedRoute />}>
-            <Route element={<AppLayout tabsForStudents />}>
-              <Route path="/perfil" element={<Perfil />} />
-              <Route path="/buscar" element={<Buscar />} />
-              {/* :slug es para volver desde un resultado de /search (route:
-                  "/glosario/:slug"); Glosario también sirve /glosario a secas. */}
-              <Route path="/glosario" element={<Glosario />} />
-              <Route path="/glosario/:slug" element={<Glosario />} />
+            {/* Docente — guard: teacher, sin tabs */}
+            <Route element={<ProtectedRoute allowedRoles={['teacher']} />}>
+              <Route element={<AppLayout />}>
+                <Route path="/docente" element={<TeacherClasses />} />
+                <Route path="/docente/clase/:classCode" element={<TeacherClassDetail />} />
+              </Route>
             </Route>
-          </Route>
 
-          <Route path="/" element={<RootRedirect />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-      </AuthProvider>
-    </BrowserRouter>
+            {/* Ambos roles — guard: cualquier sesión válida (student|teacher en §0.12).
+                El alumno conserva los tabs Módulos/Ranking/Logros para poder volver
+                a /mapa; el docente no tiene tabs (vuelve con el enlace de la cabecera). */}
+            <Route element={<ProtectedRoute />}>
+              <Route element={<AppLayout tabsForStudents />}>
+                <Route path="/perfil" element={<Perfil />} />
+                <Route path="/buscar" element={<Buscar />} />
+                {/* :slug es para volver desde un resultado de /search (route:
+                    "/glosario/:slug"); Glosario también sirve /glosario a secas. */}
+                <Route path="/glosario" element={<Glosario />} />
+                <Route path="/glosario/:slug" element={<Glosario />} />
+              </Route>
+            </Route>
+
+            <Route path="/" element={<RootRedirect />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </AuthProvider>
+      </BrowserRouter>
+    </MotionConfig>
   );
 }
 
