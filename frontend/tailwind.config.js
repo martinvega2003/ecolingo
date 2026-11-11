@@ -15,6 +15,9 @@ export default {
         muted: '#8b949e', // descripciones, subtítulos, etiquetas
       },
       borderWidth: { hair: '0.5px' },
+      fontFamily: {
+        sans: ['"Nunito Variable"', 'system-ui', '-apple-system', '"Segoe UI"', 'Roboto', 'sans-serif'],
+      },
     },
   },
   plugins: [],
