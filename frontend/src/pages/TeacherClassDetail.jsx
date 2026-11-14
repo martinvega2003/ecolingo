@@ -11,6 +11,8 @@
 // pantalla entera se hubiese recargado.
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, GraduationCap, Users } from 'lucide-react';
+import Card from '../components/common/Card.jsx';
 import Spinner from '../components/common/Spinner.jsx';
 import ErrorState from '../components/common/ErrorState.jsx';
 import StatsOverview from '../components/teacher/StatsOverview.jsx';
@@ -30,8 +32,14 @@ import {
 
 const DEFAULT_SORT = { sortBy: 'totalXp', order: 'desc' };
 
+// El key por classCode remonta el detalle al cambiar de clase: el estado
+// vuelve a 'loading' sin necesidad de un setState síncrono dentro del efecto.
 export default function TeacherClassDetail() {
   const { classCode } = useParams();
+  return <ClassDetail key={classCode} classCode={classCode} />;
+}
+
+function ClassDetail({ classCode }) {
   const navigate = useNavigate();
 
   const [state, setState] = useState('loading'); // loading | ready | error — solo para la carga inicial
@@ -46,11 +54,15 @@ export default function TeacherClassDetail() {
 
   // Carga inicial: clase + stats + alumnos, una sola vez por classCode (con
   // el orden inicial fijo — cambios posteriores de orden pasan por
-  // reloadStudents, no por acá).
-  const loadInitial = useCallback(() => {
-    setState('loading');
+  // reloadStudents, no por acá). El estado arranca en 'loading'; el reintento
+  // (handler) lo reinicia y dispara el efecto con reloadKey.
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
     Promise.all([fetchTeacherClasses(), fetchClassStats(classCode), fetchClassStudents(classCode, DEFAULT_SORT)])
       .then(([classesRes, statsRes, studentsRes]) => {
+        if (cancelled) return;
         const found = classesRes.classes.find((c) => c.code === classCode);
         if (!found) {
           // NOT_RESOURCE_OWNER / CLASS_NOT_FOUND ya se habría disparado en
@@ -67,14 +79,19 @@ export default function TeacherClassDetail() {
         setState('ready');
       })
       .catch((err) => {
+        if (cancelled) return;
         setErrorMessage(getErrorMessage(err));
         setState('error');
       });
-  }, [classCode, navigate]);
+    return () => {
+      cancelled = true;
+    };
+  }, [classCode, navigate, reloadKey]);
 
-  useEffect(() => {
-    loadInitial();
-  }, [loadInitial]);
+  const loadInitial = () => {
+    setState('loading');
+    setReloadKey((k) => k + 1);
+  };
 
   // Refetch SOLO de la lista de alumnos — no toca classInfo, stats, ni el
   // estado de carga completa. La tabla vieja queda visible (con un
@@ -128,12 +145,29 @@ export default function TeacherClassDetail() {
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <header>
-        <button onClick={() => navigate('/docente')} className="mb-2 text-xs text-muted hover:text-text">
-          ← Volver a tus clases
+      <header className="flex flex-col gap-3">
+        <button
+          onClick={() => navigate('/docente')}
+          className="flex items-center gap-1 self-start text-xs font-semibold text-muted transition-colors hover:text-text"
+        >
+          <ArrowLeft aria-hidden="true" className="h-3.5 w-3.5" />
+          Volver a mis clases
         </button>
-        <h1 className="text-lg font-medium text-text">{classInfo.name}</h1>
-        <p className="text-xs text-muted">{classInfo.code}</p>
+        <Card className="flex items-center gap-3">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/40 text-accent">
+            <GraduationCap aria-hidden="true" className="h-6 w-6" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-xl font-extrabold text-text">{classInfo.name}</h1>
+            <p className="flex flex-wrap items-center gap-x-2 text-xs text-muted">
+              <span className="rounded-md bg-surface-2 px-1.5 py-0.5 font-bold text-text">{classInfo.code}</span>
+              <span className="flex items-center gap-1">
+                <Users aria-hidden="true" className="h-3 w-3" />
+                {stats.studentCount} {stats.studentCount === 1 ? 'alumno' : 'alumnos'}
+              </span>
+            </p>
+          </div>
+        </Card>
       </header>
 
       <StatsOverview stats={stats} />
