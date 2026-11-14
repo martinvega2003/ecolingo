@@ -5,3 +5,12 @@ export const normalize = (text) =>
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase();
+
+// Dos primeras iniciales de un nombre, para los avatares (Avatar.jsx).
+export const initialsOf = (fullName = '') =>
+  fullName
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? '')
+    .join('');

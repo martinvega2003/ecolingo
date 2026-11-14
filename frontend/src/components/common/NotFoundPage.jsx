@@ -12,11 +12,12 @@
 // al guard de todos modos. Pendiente de acuerdo bilateral con Cesar,
 // igual que USERNAME_TAKEN en F01.
 import { motion } from 'framer-motion';
-import { Compass, Home, LogIn } from 'lucide-react';
+import { Home, LogIn } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.js';
 import { homeRouteForRole } from '../../utils/routes.js';
 import Button from './Button.jsx';
+import Mascot from './Mascot.jsx';
 
 const NotFoundPage = () => {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -28,18 +29,22 @@ const NotFoundPage = () => {
   const label = isAuthenticated ? 'Volver al inicio' : 'Ir a iniciar sesión';
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-bg px-4 text-center">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-bg px-4 text-center">
       <motion.div
-        initial={{ opacity: 0, rotate: -40, scale: 0.6 }}
+        initial={{ opacity: 0, rotate: -20, scale: 0.7 }}
         animate={{ opacity: 1, rotate: 0, scale: 1 }}
         transition={{ type: 'spring', stiffness: 180, damping: 12 }}
-        className="flex h-20 w-20 items-center justify-center rounded-full bg-surface text-info"
       >
-        <Compass aria-hidden="true" className="h-10 w-10" />
+        <Mascot mood="mareado" className="h-32 w-40" />
       </motion.div>
-      <h1 className="text-4xl font-extrabold text-text">404</h1>
-      <p className="max-w-xs text-muted">Parece que te desviaste del camino: esta página no existe.</p>
-      <Button icon={isAuthenticated ? Home : LogIn} onClick={() => navigate(destination, { replace: true })}>
+      <p className="text-5xl font-extrabold text-accent">404</p>
+      <h1 className="text-xl font-extrabold text-text">Esta página se escapó de la alcancía</h1>
+      <p className="max-w-xs text-sm text-muted">La dirección no existe o cambió.</p>
+      <Button
+        className="mt-2"
+        icon={isAuthenticated ? Home : LogIn}
+        onClick={() => navigate(destination, { replace: true })}
+      >
         {label}
       </Button>
     </div>
