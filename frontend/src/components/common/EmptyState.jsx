@@ -1,18 +1,19 @@
 import { motion } from 'framer-motion';
-import { Inbox } from 'lucide-react';
+import Mascot from './Mascot.jsx';
 
-// `icon` es opcional (componente de lucide-react); sin él se usa Inbox.
-const EmptyState = ({ title, description, action, icon: Icon = Inbox }) => (
+// Estado vacío con la mascota. Misma API (title, description, action); la
+// prop `icon` de la versión anterior se sigue aceptando pero ya no se dibuja:
+// el chanchito toma su lugar en todas las pantallas a la vez.
+// - mood: estado de la mascota (por defecto 'durmiendo').
+const EmptyState = ({ title, description, action, mood = 'durmiendo' }) => (
   <motion.div
     initial={{ opacity: 0, y: 10 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.3 }}
-    className="flex flex-col items-center gap-3 py-12 text-center"
+    className="flex flex-col items-center gap-3 py-10 text-center"
   >
-    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-surface text-muted">
-      <Icon aria-hidden="true" className="h-7 w-7" />
-    </div>
-    <h3 className="text-base font-semibold text-text">{title}</h3>
+    <Mascot mood={mood} className="h-24 w-28" />
+    <h3 className="text-base font-extrabold text-text">{title}</h3>
     {description && <p className="max-w-sm text-sm text-muted">{description}</p>}
     {action}
   </motion.div>

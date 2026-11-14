@@ -29,7 +29,7 @@ const Input = ({ label, icon: Icon, revealable = false, type = 'text', className
         <input
           id={id}
           type={actualType}
-          className={`w-full rounded-lg border border-hair border-muted bg-surface py-2.5 text-text outline-none transition-colors placeholder:text-muted/60 focus:border-info ${
+          className={`w-full rounded-xl border border-surface-2 bg-surface-2 py-2.5 text-text outline-none transition-colors placeholder:text-muted/60 focus:border-info disabled:cursor-not-allowed disabled:text-muted ${
             Icon ? 'pl-10' : 'pl-3'
           } ${isPassword && revealable ? 'pr-10' : 'pr-3'} ${inputClassName}`}
           {...rest}
