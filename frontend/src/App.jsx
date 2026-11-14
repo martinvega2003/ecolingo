@@ -45,9 +45,12 @@ function App() {
 
             {/* Alumno — guard: student, con tabs Módulos/Ranking/Logros */}
             <Route element={<ProtectedRoute allowedRoles={['student']} />}>
+              {/* Lección en "modo concentrado": mismo guard de alumno, pero sin
+                  cabecera ni tabs. La pantalla trae su propia barra con la X
+                  para salir, el progreso y las vidas. */}
+              <Route path="/leccion/:attemptId" element={<LessonScreen />} />
               <Route element={<AppLayout showTabs />}>
                 <Route path="/mapa" element={<Mapa />} />
-                <Route path="/leccion/:attemptId" element={<LessonScreen />} />
                 <Route path="/resultado/:attemptId" element={<Resultado />} />
                 <Route path="/ranking" element={<Ranking />} />
                 <Route path="/logros" element={<Logros />} />
