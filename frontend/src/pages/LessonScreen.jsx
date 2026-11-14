@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowRight, CircleCheck, CircleX, Heart, Trophy, X, Zap } from 'lucide-react';
+import client from '../api/client.js';
 import { fetchAttempt, submitAnswer, abandonAttempt } from '../api/lessonApi.js';
+import { getModuleTheme } from '../theme/moduleTheme.js';
 import { now } from '../utils/time.js';
-import Card from '../components/common/Card.jsx';
 import Button from '../components/common/Button.jsx';
+import ModuleIcon from '../components/common/ModuleIcon.jsx';
 import Spinner from '../components/common/Spinner.jsx';
 import ErrorState from '../components/common/ErrorState.jsx';
 import ProgressBar from '../components/common/ProgressBar.jsx';
@@ -25,7 +27,11 @@ const LessonScreen = () => {
   const [feedback, setFeedback] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reloadToken, setReloadToken] = useState(0); // cambiar este valor dispara una recarga
-  const feedbackRef = useRef(null); // para llevar el feedback a la vista en pantallas chicas
+  // Orden del módulo (1-5), solo para elegir su color e icono. El Endpoint 8
+  // devuelve moduleId y moduleTitle pero no el orden, así que se busca en
+  // GET /modules (Endpoint 5). Si esa llamada falla, la lección sigue igual
+  // con el color general.
+  const [moduleOrder, setModuleOrder] = useState(null);
   const questionStartedAt = useRef(null); // sin Date.now() acá — se evaluaría durante el render
 
   useEffect(() => {
@@ -72,11 +78,21 @@ const LessonScreen = () => {
 
   const reload = () => setReloadToken((token) => token + 1);
 
-  // En 375 px el feedback (y el botón "Siguiente") queda debajo de las opciones,
-  // tapado por la barra de tabs: al responder se lo lleva suavemente a la vista.
+  const moduleId = attempt?.moduleId;
   useEffect(() => {
-    if (feedback) feedbackRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }, [feedback]);
+    if (!moduleId) return undefined;
+    let ignore = false;
+    client
+      .get('/modules')
+      .then((res) => {
+        const found = res.data.modules.find((m) => m.id === moduleId);
+        if (!ignore && found) setModuleOrder(found.order);
+      })
+      .catch(() => {});
+    return () => {
+      ignore = true;
+    };
+  }, [moduleId]);
 
   const handleSelect = async (optionKey) => {
     if (isSubmitting || feedback) return; // protección de doble clic (riesgo señalado en Parte 3, F04)
@@ -132,7 +148,7 @@ const LessonScreen = () => {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-bg">
         <Spinner label="Cargando lección…" />
       </div>
     );
@@ -140,19 +156,28 @@ const LessonScreen = () => {
 
   if (error) {
     return (
-      <div className="p-6">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-2 bg-bg p-6">
         <ErrorState title="No pudimos cargar la lección" description={error} onRetry={reload} />
+        <Button variant="ghost" onClick={() => navigate('/mapa', { replace: true })}>
+          Volver al mapa
+        </Button>
       </div>
     );
   }
 
   if (!attempt) return null;
 
+  const theme = getModuleTheme(moduleOrder);
   const hearts = Array.from({ length: attempt.totalLives }, (_, i) => i < attempt.livesRemaining);
+  const questionNumber = question?.order ?? attempt.currentQuestionOrder;
+  // La barra avanza al responder: cuenta las preguntas ya contestadas.
+  const answeredCount = feedback ? questionNumber : questionNumber - 1;
 
   return (
-    <div className="p-4">
-      <div className="mb-4 flex items-center justify-between">
+    // Modo concentrado: sin cabecera ni tabs (ver App.jsx). Solo la X para
+    // salir, el progreso y las vidas.
+    <div className="flex min-h-screen flex-col bg-bg text-text">
+      <header className="mx-auto flex w-full max-w-3xl items-center gap-3 px-4 pt-4">
         <button
           type="button"
           onClick={handleAbandon}
@@ -161,7 +186,10 @@ const LessonScreen = () => {
         >
           <X aria-hidden="true" className="h-6 w-6" />
         </button>
-        <div className="flex gap-1.5" aria-label={`${attempt.livesRemaining} de ${attempt.totalLives} vidas`}>
+        <div className="flex-1">
+          <ProgressBar value={answeredCount} max={attempt.totalQuestions} size="lg" barClassName={theme.bg} />
+        </div>
+        <div className="flex gap-1" aria-label={`${attempt.livesRemaining} de ${attempt.totalLives} vidas`}>
           {hearts.map((alive, i) => (
             // initial={false}: no anima al montar; al perder una vida (alive pasa a false)
             // el corazón "late" una vez.
@@ -173,90 +201,108 @@ const LessonScreen = () => {
             >
               <Heart
                 aria-hidden="true"
-                className={`h-6 w-6 transition-colors ${alive ? 'fill-danger text-danger' : 'text-muted'}`}
+                className={`h-6 w-6 transition-colors ${alive ? 'fill-danger text-danger' : 'text-surface-2'}`}
               />
             </motion.span>
           ))}
         </div>
-      </div>
+      </header>
 
-      <ProgressBar
-        value={question?.order ?? attempt.currentQuestionOrder}
-        max={attempt.totalQuestions}
-        label={`Pregunta ${question?.order ?? attempt.currentQuestionOrder} de ${attempt.totalQuestions}`}
-      />
+      {/* pb-56: deja lugar para la franja de feedback fija, así no tapa las opciones */}
+      <main className={`mx-auto w-full max-w-3xl flex-1 px-4 pt-6 ${feedback ? 'pb-56' : 'pb-8'}`}>
+        <div className="mb-4 flex items-center gap-2">
+          <ModuleIcon order={moduleOrder} size="sm" />
+          <p className={`text-xs font-extrabold uppercase tracking-wider ${theme.text}`}>
+            {attempt.moduleTitle} · Pregunta {questionNumber} de {attempt.totalQuestions}
+          </p>
+        </div>
 
-      {question && (
-        // La pregunta se cruza con un fundido al pasar a la siguiente (key = id).
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={question.id}
-            initial={{ opacity: 0, x: 24 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -24 }}
-            transition={{ duration: 0.2 }}
-          >
-            <Card className="my-6">
-              <p className="text-base font-medium leading-relaxed text-text">{question.statement}</p>
-            </Card>
+        {question && (
+          // La pregunta se cruza con un fundido al pasar a la siguiente (key = id).
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={question.id}
+              initial={{ opacity: 0, x: 24 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -24 }}
+              transition={{ duration: 0.2 }}
+            >
+              <h1 className="mb-6 text-lg font-bold leading-relaxed text-text sm:text-xl">{question.statement}</h1>
 
-            {/* Las opciones se quedan visibles tras responder: la correcta en verde y,
-                si falló, la elegida en rojo (feedback.correctOptionKey / selectedOptionKey,
-                Endpoint 9). Quedan deshabilitadas: no se puede responder dos veces. */}
-            <div className="flex flex-col gap-3">
-              {question.options.map((option, i) => (
-                <OptionButton
-                  key={option.key}
-                  option={option}
-                  index={i}
-                  feedback={feedback}
-                  disabled={isSubmitting || Boolean(feedback)}
-                  onSelect={() => handleSelect(option.key)}
-                />
-              ))}
-            </div>
-          </motion.div>
-        </AnimatePresence>
-      )}
+              {/* Tres opciones (A, B, C — contrato del Endpoint 9). Se quedan
+                  visibles tras responder: la correcta en verde y, si falló, la
+                  elegida en rojo. Quedan deshabilitadas: no se responde dos veces. */}
+              <div className="flex flex-col gap-3">
+                {question.options.map((option, i) => (
+                  <OptionButton
+                    key={option.key}
+                    option={option}
+                    index={i}
+                    feedback={feedback}
+                    disabled={isSubmitting || Boolean(feedback)}
+                    onSelect={() => handleSelect(option.key)}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        )}
+      </main>
 
+      {/* Franja de feedback fija abajo: verde o roja, con la explicación y "Siguiente" */}
       <AnimatePresence>
         {feedback && (
           <motion.div
             key="feedback"
-            ref={feedbackRef}
-            className="scroll-mb-24"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0, x: feedback.isCorrect ? 0 : [0, -8, 8, -6, 6, 0] }}
-            transition={{ duration: 0.35 }}
+            role="status"
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+            className={`fixed inset-x-0 bottom-0 z-30 max-h-[60vh] overflow-y-auto border-t-4 bg-surface ${
+              feedback.isCorrect ? 'border-accent' : 'border-danger'
+            }`}
           >
-            <Card className={`my-6 ${feedback.isCorrect ? 'border-accent bg-accent/5' : 'border-danger bg-danger/5'}`}>
-              <div className={`mb-2 flex items-center gap-2 font-bold ${feedback.isCorrect ? 'text-accent' : 'text-danger'}`}>
-                {feedback.isCorrect ? (
-                  <CircleCheck aria-hidden="true" className="h-5 w-5" />
-                ) : (
-                  <CircleX aria-hidden="true" className="h-5 w-5" />
-                )}
-                <span>{feedback.isCorrect ? '¡Correcto!' : 'Incorrecto'}</span>
-                {feedback.xpAwarded > 0 && (
-                  <motion.span
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 12, delay: 0.15 }}
-                    className="ml-auto inline-flex items-center gap-1 rounded-full bg-accent/15 px-2.5 py-0.5 text-sm text-accent"
-                  >
-                    <Zap aria-hidden="true" className="h-3.5 w-3.5 fill-accent" />+{feedback.xpAwarded} XP
-                  </motion.span>
-                )}
+            <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:gap-5">
+              <div className="flex min-w-0 flex-1 gap-3">
+                <span
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+                    feedback.isCorrect ? 'bg-accent/15 text-accent' : 'bg-danger/15 text-danger'
+                  }`}
+                >
+                  {feedback.isCorrect ? (
+                    <CircleCheck aria-hidden="true" className="h-6 w-6" />
+                  ) : (
+                    <CircleX aria-hidden="true" className="h-6 w-6" />
+                  )}
+                </span>
+                <div className="min-w-0">
+                  <p className={`flex flex-wrap items-center gap-2 text-base font-extrabold ${feedback.isCorrect ? 'text-accent' : 'text-danger'}`}>
+                    {feedback.isCorrect ? '¡Correcto!' : 'Incorrecto'}
+                    {feedback.xpAwarded > 0 && (
+                      <motion.span
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 12, delay: 0.15 }}
+                        className="inline-flex items-center gap-1 rounded-full bg-accent/15 px-2.5 py-0.5 text-sm text-accent"
+                      >
+                        <Zap aria-hidden="true" className="h-3.5 w-3.5 fill-accent" />+{feedback.xpAwarded} XP
+                      </motion.span>
+                    )}
+                  </p>
+                  <p className="mt-1 text-sm leading-relaxed text-text/90">{feedback.explanation}</p>
+                </div>
               </div>
-              <p className="text-sm leading-relaxed text-muted">{feedback.explanation}</p>
               <Button
-                className="mt-4 w-full sm:w-auto"
+                className="w-full shrink-0 py-3 sm:w-auto sm:px-8"
+                variant={feedback.isCorrect ? 'primary' : 'danger'}
                 icon={attempt.status === 'in_progress' ? ArrowRight : Trophy}
                 onClick={handleNext}
+                autoFocus
               >
                 {attempt.status === 'in_progress' ? 'Siguiente' : 'Ver resultado'}
               </Button>
-            </Card>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -264,13 +310,14 @@ const LessonScreen = () => {
   );
 };
 
+// Opción de respuesta: botón grande con la letra y borde inferior "3D".
 function OptionButton({ option, index, feedback, disabled, onSelect }) {
   const answered = Boolean(feedback);
   const isCorrectOption = answered && option.key === feedback.correctOptionKey;
   const isWrongPick = answered && option.key === feedback.selectedOptionKey && !feedback.isCorrect;
 
-  let stateClass = 'border-muted hover:border-info hover:bg-info/10';
-  let badgeClass = 'bg-bg text-muted';
+  let stateClass = 'border-surface-2 bg-surface hover:border-info hover:bg-info/10';
+  let badgeClass = 'bg-surface-2 text-text';
   if (isCorrectOption) {
     stateClass = 'border-accent bg-accent/10';
     badgeClass = 'bg-accent text-bg';
@@ -278,7 +325,7 @@ function OptionButton({ option, index, feedback, disabled, onSelect }) {
     stateClass = 'border-danger bg-danger/10';
     badgeClass = 'bg-danger text-text';
   } else if (answered) {
-    stateClass = 'border-surface opacity-50';
+    stateClass = 'border-surface-2 bg-surface opacity-50';
   }
 
   return (
@@ -289,14 +336,14 @@ function OptionButton({ option, index, feedback, disabled, onSelect }) {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, delay: 0.05 + index * 0.06 }}
-      whileTap={disabled ? undefined : { scale: 0.98 }}
-      className={`flex items-center gap-3 rounded-xl border border-hair bg-surface px-4 py-3 text-left text-sm text-text transition-colors disabled:cursor-default ${stateClass}`}
+      whileTap={disabled ? undefined : { y: 2 }}
+      className={`flex items-center gap-3 rounded-2xl border-2 border-b-4 px-4 py-3.5 text-left text-sm font-semibold text-text transition-colors disabled:cursor-default sm:text-base ${stateClass}`}
     >
-      <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${badgeClass}`}>
+      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-extrabold ${badgeClass}`}>
         {isCorrectOption ? (
-          <CircleCheck aria-hidden="true" className="h-4 w-4" />
+          <CircleCheck aria-hidden="true" className="h-5 w-5" />
         ) : isWrongPick ? (
-          <CircleX aria-hidden="true" className="h-4 w-4" />
+          <CircleX aria-hidden="true" className="h-5 w-5" />
         ) : (
           option.key
         )}

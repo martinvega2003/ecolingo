@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowRight, Hash, Lock, Loader2, TriangleAlert, User, UserRound } from 'lucide-react';
 import Input from '../common/Input.jsx';
+import Button from '../common/Button.jsx';
 import { useAuth } from '../../hooks/useAuth.js';
 import { homeRouteForRole } from '../../utils/routes.js';
 
@@ -57,31 +58,6 @@ const StudentLoginForm = () => {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <div className="relative flex rounded-lg border border-hair border-muted p-1 text-sm">
-        {[
-          { value: 'returning', label: 'Ya tengo cuenta' },
-          { value: 'new', label: 'Soy nuevo' },
-        ].map((m) => (
-          <button
-            key={m.value}
-            type="button"
-            onClick={() => handleModeChange(m.value)}
-            className={`relative flex-1 rounded-md px-3 py-1.5 font-medium transition-colors ${
-              mode === m.value ? 'text-text' : 'text-muted hover:text-text'
-            }`}
-          >
-            {mode === m.value && (
-              <motion.span
-                layoutId="student-mode-pill"
-                className="absolute inset-0 rounded-md bg-primary"
-                transition={{ type: 'spring', stiffness: 400, damping: 32 }}
-              />
-            )}
-            <span className="relative">{m.label}</span>
-          </button>
-        ))}
-      </div>
-
       <Input
         label="Usuario"
         icon={User}
@@ -165,11 +141,7 @@ const StudentLoginForm = () => {
         )}
       </AnimatePresence>
 
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-semibold text-text transition-all hover:bg-primary/85 active:scale-[0.97] disabled:opacity-60 disabled:active:scale-100"
-      >
+      <Button type="submit" disabled={isSubmitting} className="w-full py-3 text-base">
         {isSubmitting ? (
           <>
             <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> Ingresando…
@@ -179,7 +151,19 @@ const StudentLoginForm = () => {
             {mode === 'new' ? 'Crear cuenta' : 'Entrar'} <ArrowRight aria-hidden="true" className="h-4 w-4" />
           </>
         )}
-      </button>
+      </Button>
+
+      {/* Alterna entre ingresar y registrarse (antes era un selector arriba del formulario) */}
+      <p className="text-center text-sm text-muted">
+        {mode === 'returning' ? '¿Primera vez?' : '¿Ya tenés cuenta?'}{' '}
+        <button
+          type="button"
+          onClick={() => handleModeChange(mode === 'returning' ? 'new' : 'returning')}
+          className="font-bold text-accent hover:underline"
+        >
+          {mode === 'returning' ? 'Creá tu cuenta' : 'Ingresá'}
+        </button>
+      </p>
     </form>
   );
 };

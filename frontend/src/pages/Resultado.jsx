@@ -1,53 +1,59 @@
-// F05 — Resultado del Módulo (GUIA_DE_CODIGO.md corregida, Parte 1
-// endpoint 11, Parte 3 F05). "No hay mockup del diseño" para el caso
-// fallido — se resuelve con el mismo sistema visual (Card, tokens),
-// sin confeti, con tono sobrio e invitación a reintentar.
+// F05 — Resultado del Módulo (GUIA_DE_CODIGO.md, Parte 1 endpoint 11,
+// Parte 3 F05; propuesta visual, Pantalla 4).
 //
 // Tres tonos (Parte 3, F05 — Riesgos):
-// - Primera vez completado → celebración completa (confeti breve + pop).
-// - Repetición (isFirstCompletion: false) → celebración atenuada, sin confeti.
+// - Primera vez completado → celebración completa: chanchito feliz y
+//   lluvia de monedas (reemplaza al confeti genérico).
+// - Repetición (isFirstCompletion: false) → celebración atenuada, sin monedas.
 // - failed / abandoned → sin celebración, invitación a reintentar.
-// El confeti es pointer-events-none y dura ~1,2 s: no tapa ni bloquea los
-// botones ("La celebración no puede tapar la información").
+// Las monedas son pointer-events-none y duran ~1,4 s: no tapan ni bloquean
+// los botones ("La celebración no puede tapar la información").
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
-import { CircleCheckBig, HeartCrack, Heart, RotateCcw, Star, Target, Trophy, TrendingUp, Zap, ArrowRight, Map as MapIcon } from 'lucide-react';
+import { ArrowRight, Heart, Map as MapIcon, RotateCcw, Target, TrendingUp, Trophy, Zap } from 'lucide-react';
 import AnimatedNumber from '../components/common/AnimatedNumber.jsx';
-import Card from '../components/common/Card.jsx';
+import BadgeMedal from '../components/common/BadgeMedal.jsx';
 import Button from '../components/common/Button.jsx';
-import Spinner from '../components/common/Spinner.jsx';
+import Card from '../components/common/Card.jsx';
+import Coin from '../components/common/Coin.jsx';
 import ErrorState from '../components/common/ErrorState.jsx';
+import Mascot from '../components/common/Mascot.jsx';
+import ModuleIcon from '../components/common/ModuleIcon.jsx';
+import Spinner from '../components/common/Spinner.jsx';
 import { useAuth } from '../hooks/useAuth.js';
+import { startAttempt } from '../api/lessonApi.js';
 import { fetchResult, getErrorMessage } from '../api/resultApi.js';
+import { getModuleTheme } from '../theme/moduleTheme.js';
 
-// Partículas precalculadas a nivel de módulo (determinísticas): nada de
+// Monedas precalculadas a nivel de módulo (determinísticas): nada de
 // Math.random() durante el render — React Compiler purity rules.
-const CONFETTI_COLORS = ['bg-accent', 'bg-primary', 'bg-warn', 'bg-info'];
-const CONFETTI = Array.from({ length: 18 }, (_, i) => {
-  const angle = (i / 18) * Math.PI * 2;
-  const distance = i % 2 === 0 ? 120 : 80;
+const COIN_RAIN = Array.from({ length: 14 }, (_, i) => {
+  const angle = (i / 14) * Math.PI * 2;
+  const distance = i % 2 === 0 ? 150 : 100;
   return {
     id: i,
     x: Math.cos(angle) * distance,
-    y: Math.sin(angle) * distance - 40,
-    rotate: (i % 3) * 120,
-    color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
-    delay: (i % 4) * 0.04,
+    y: Math.sin(angle) * distance * 0.7 - 30,
+    rotate: (i % 3) * 140 - 120,
+    size: i % 3 === 0 ? 'h-7 w-7' : 'h-5 w-5',
+    delay: (i % 5) * 0.05,
   };
 });
 
-function ConfettiBurst() {
+function CoinBurst() {
   return (
-    <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-visible">
-      {CONFETTI.map((p) => (
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-visible">
+      {COIN_RAIN.map((c) => (
         <motion.span
-          key={p.id}
-          className={`absolute h-2 w-2 rounded-sm ${p.color}`}
-          initial={{ x: 0, y: 0, opacity: 1, scale: 0.6, rotate: 0 }}
-          animate={{ x: p.x, y: p.y, opacity: 0, scale: 1, rotate: p.rotate }}
-          transition={{ duration: 1.2, delay: p.delay, ease: 'easeOut' }}
-        />
+          key={c.id}
+          className="absolute"
+          initial={{ x: 0, y: 0, opacity: 0, scale: 0.4, rotate: 0 }}
+          animate={{ x: c.x, y: c.y, opacity: [0, 1, 1, 0], scale: 1, rotate: c.rotate }}
+          transition={{ duration: 1.4, delay: c.delay, ease: 'easeOut' }}
+        >
+          <Coin className={c.size} />
+        </motion.span>
       ))}
     </div>
   );
@@ -63,6 +69,7 @@ export default function Resultado() {
   const [data, setData] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [reloadToken, setReloadToken] = useState(0); // cambiar este valor dispara una recarga
+  const [isStartingNext, setIsStartingNext] = useState(false);
 
   // Patrón IIFE dentro del efecto (React Compiler purity rules) — mismo
   // criterio que LessonScreen.jsx (F04) y Glosario.jsx (F10).
@@ -93,7 +100,7 @@ export default function Resultado() {
   if (state === 'loading') {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <Spinner label="Calculando tu resultado…" />
+        <Spinner label="Contando tus monedas…" />
       </div>
     );
   }
@@ -112,9 +119,22 @@ export default function Resultado() {
   const isNotCompleted = isFailed || isAbandoned;
   const isRepeat = !isNotCompleted && !rewards.isFirstCompletion;
   const celebrate = !isNotCompleted && rewards.isFirstCompletion;
-  const showConfetti = celebrate && !prefersReducedMotion;
+  const showCoins = celebrate && !prefersReducedMotion;
+  const canContinue = Boolean(nextModule?.isUnlocked) && !isNotCompleted;
 
   const goToMap = () => navigate('/mapa');
+
+  // "Seguir con el módulo N": abre un intento del siguiente módulo con el
+  // Endpoint 7 (el mismo que usa el Mapa). Si algo falla, vuelve al mapa.
+  const goToNextModule = async () => {
+    setIsStartingNext(true);
+    try {
+      const res = await startAttempt(nextModule.id);
+      navigate(`/leccion/${res.attempt.id}`);
+    } catch {
+      navigate('/mapa');
+    }
+  };
 
   const headerAnimation = celebrate
     ? {
@@ -124,123 +144,113 @@ export default function Resultado() {
       }
     : { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { duration: 0.3 } };
 
-  const headerBorder = isNotCompleted
-    ? 'border-danger'
-    : isRepeat
-      ? 'border-muted'
-      : attempt.isPerfect
-        ? 'border-accent'
-        : 'border-primary';
-
-  // Iconos en lugar de emojis (fallan en Android viejos — GUIA_DEL_PROYECTO, 5.2).
-  // Los emojis de las insignias (badge.emoji) vienen de la API y se mantienen.
-  const HeaderIcon = isNotCompleted ? HeartCrack : isRepeat ? RotateCcw : attempt.isPerfect ? Star : CircleCheckBig;
-  const headerTone = isNotCompleted
-    ? 'bg-danger/10 text-danger'
-    : isRepeat
-      ? 'bg-muted/10 text-muted'
-      : 'bg-accent/10 text-accent';
+  const mood = isFailed ? 'mareado' : isAbandoned ? 'durmiendo' : isRepeat ? 'normal' : 'feliz';
+  const title = isFailed
+    ? 'No llegaste esta vez'
+    : isAbandoned
+      ? 'Dejaste este intento'
+      : isRepeat
+        ? 'Repaso completado'
+        : '¡Módulo completado!';
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div className="mx-auto flex max-w-3xl flex-col gap-4 p-4">
       <div className="relative">
-        {showConfetti && <ConfettiBurst />}
-        <motion.div {...headerAnimation}>
-          <Card className={headerBorder}>
-            <div className="flex flex-col items-center gap-2 py-2 text-center">
-              <div className={`flex h-16 w-16 items-center justify-center rounded-full ${headerTone}`}>
-                <HeaderIcon aria-hidden="true" className={`h-8 w-8 ${attempt.isPerfect && !isNotCompleted ? 'fill-accent' : ''}`} />
-              </div>
-              <h1 className="text-xl font-bold text-text">
-                {isFailed ? 'No llegaste esta vez' : isAbandoned ? 'Dejaste este intento' : moduleInfo.title}
-              </h1>
-              {isFailed && (
-                <p className="text-sm text-muted">Te quedaste sin vidas. Tu progreso no se perdió, podés reintentar.</p>
-              )}
-              {isAbandoned && (
-                <p className="text-sm text-muted">Este intento quedó sin terminar. Podés volver a empezarlo desde el mapa.</p>
-              )}
-              {isRepeat && <p className="text-sm text-muted">Repaso completado. Ya habías ganado el XP de este módulo.</p>}
-              {celebrate && attempt.isPerfect && (
-                <p className="text-sm text-accent">¡Módulo perfecto! Respondiste todo bien.</p>
-              )}
-              {isRepeat && attempt.isPerfect && <p className="text-sm text-muted">Esta vez, sin errores.</p>}
-            </div>
-          </Card>
+        {showCoins && <CoinBurst />}
+        <motion.div {...headerAnimation} className="flex flex-col items-center gap-1 pb-2 pt-4 text-center">
+          <Mascot mood={mood} coin={false} className="h-28 w-36" />
+          <h1 className="mt-2 text-2xl font-extrabold text-text">{title}</h1>
+          <p className={`text-base font-bold ${getModuleTheme(moduleInfo.order).text}`}>{moduleInfo.title}</p>
+          {isFailed && (
+            <p className="text-sm text-muted">Te quedaste sin vidas. Tu progreso no se perdió, podés reintentar.</p>
+          )}
+          {isAbandoned && (
+            <p className="text-sm text-muted">Este intento quedó sin terminar. Podés volver a empezarlo desde el mapa.</p>
+          )}
+          {isRepeat && <p className="text-sm text-muted">Ya habías ganado el XP de este módulo.</p>}
+          {celebrate && attempt.isPerfect && (
+            <p className="text-sm font-semibold text-accent">¡Módulo perfecto! Respondiste todo bien.</p>
+          )}
+          {isRepeat && attempt.isPerfect && <p className="text-sm text-muted">Esta vez, sin errores.</p>}
         </motion.div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <StatTile icon={Target} label="Aciertos" delay={0.05}>
-          <p className="text-lg font-bold text-text">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <StatTile icon={Target} tone="bg-info/15 text-info" label="Aciertos" delay={0.05}>
+          <p className="text-xl font-extrabold text-text">
             {attempt.correctCount}/{attempt.totalQuestions}{' '}
-            <span className="text-sm font-medium text-muted">({attempt.accuracyPercentage}%)</span>
+            <span className="text-sm font-semibold text-muted">· {attempt.accuracyPercentage} %</span>
           </p>
         </StatTile>
-        <StatTile icon={Zap} label="XP ganado" delay={0.1}>
-          <p className={`text-lg font-bold ${celebrate ? 'text-accent' : 'text-muted'}`}>
+        <StatTile icon={Zap} tone="bg-accent/15 text-accent" label="XP ganado" delay={0.1}>
+          <p className={`text-xl font-extrabold ${celebrate ? 'text-accent' : 'text-muted'}`}>
             +<AnimatedNumber value={rewards.xpEarned} /> XP
           </p>
         </StatTile>
-        <StatTile icon={Trophy} label="Posición en el ranking" delay={0.15}>
-          <p className="text-lg font-bold text-text">
-            #{ranking.position} de {ranking.totalStudents}
+        <StatTile icon={Trophy} tone="bg-gold/15 text-gold" label="Ranking" delay={0.15}>
+          <p className="text-xl font-extrabold text-text">
+            #{ranking.position} <span className="text-sm font-semibold text-muted">de {ranking.totalStudents}</span>
           </p>
           {ranking.positionsGained > 0 && (
-            <p className="mt-0.5 inline-flex items-center gap-1 text-xs font-semibold text-accent">
+            <p className="mt-0.5 inline-flex items-center gap-1 text-xs font-bold text-accent">
               <TrendingUp aria-hidden="true" className="h-3 w-3" />
-              Subiste {ranking.positionsGained} posición(es)
+              Subiste {ranking.positionsGained} {ranking.positionsGained === 1 ? 'posición' : 'posiciones'}
             </p>
           )}
         </StatTile>
-        <StatTile icon={Heart} label="Vidas restantes" delay={0.2}>
-          <p className="text-lg font-bold text-text">{attempt.livesRemaining}/3</p>
+        <StatTile icon={Heart} tone="bg-danger/15 text-danger" label="Vidas" delay={0.2}>
+          <p className="text-xl font-extrabold text-text">
+            {attempt.livesRemaining} <span className="text-sm font-semibold text-muted">de 3</span>
+          </p>
         </StatTile>
       </div>
 
-      {rewards.badgesUnlocked.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: celebrate ? 0.2 : 0 }}
-        >
-          <Card className="border-accent">
-            <p className="mb-3 text-sm font-semibold text-text">Nuevas insignias</p>
-            <div className="flex flex-col gap-2">
-              {rewards.badgesUnlocked.map((badge, badgeIndex) => (
-                <motion.div
-                  key={badge.code}
-                  className="flex items-center gap-3"
-                  initial={{ opacity: 0, x: -12 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.4 + badgeIndex * 0.15 }}
-                >
-                  <span className="text-2xl">{badge.emoji}</span>
-                  <div>
-                    <p className="text-sm text-text">{badge.name}</p>
-                    <p className="text-xs text-muted">{badge.description}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </Card>
-        </motion.div>
+      {(rewards.badgesUnlocked.length > 0 || canContinue) && (
+        <div className="grid gap-3 md:grid-cols-2">
+          {rewards.badgesUnlocked.map((badge, badgeIndex) => (
+            <motion.div
+              key={badge.code}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.3 + badgeIndex * 0.15 }}
+            >
+              <Card className="flex h-full items-center gap-4 border-gold/50">
+                <BadgeMedal code={badge.code} />
+                <div className="min-w-0">
+                  <p className="text-[11px] font-extrabold uppercase tracking-wider text-gold">Nueva insignia</p>
+                  <p className="text-base font-extrabold text-text">{badge.name}</p>
+                  <p className="text-xs text-muted">{badge.description}</p>
+                </div>
+              </Card>
+            </motion.div>
+          ))}
+
+          {canContinue && (
+            <Card className={`flex h-full items-center gap-4 ${getModuleTheme(nextModule.order).softBorder}`}>
+              <ModuleIcon order={nextModule.order} />
+              <div className="min-w-0">
+                <p className="text-[11px] font-extrabold uppercase tracking-wider text-muted">Se desbloqueó</p>
+                <p className="text-base font-extrabold text-text">{nextModule.title}</p>
+                <p className="text-xs text-muted">Módulo {nextModule.order}</p>
+              </div>
+            </Card>
+          )}
+        </div>
       )}
 
-      {nextModule && nextModule.isUnlocked && !isNotCompleted && (
-        <Card className="border-info">
-          <p className="text-xs text-muted">Siguiente módulo desbloqueado</p>
-          <p className="text-sm font-semibold text-text">{nextModule.title}</p>
-        </Card>
-      )}
-
-      <div className="flex items-center gap-3">
-        <Button icon={isNotCompleted ? RotateCcw : MapIcon} onClick={goToMap}>
-          {isNotCompleted ? 'Reintentar' : 'Volver al mapa'}
-        </Button>
-        {!isNotCompleted && (
-          <Button variant="secondary" icon={ArrowRight} onClick={goToMap}>
-            Ver mi progreso
+      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        {canContinue ? (
+          <>
+            <Button variant="secondary" icon={MapIcon} onClick={goToMap} className="py-3">
+              Volver al mapa
+            </Button>
+            <Button icon={ArrowRight} onClick={goToNextModule} disabled={isStartingNext} className="py-3">
+              {isStartingNext ? 'Abriendo…' : `Seguir con el módulo ${nextModule.order}`}
+            </Button>
+          </>
+        ) : (
+          <Button icon={isNotCompleted ? RotateCcw : MapIcon} onClick={goToMap} className="py-3">
+            {isNotCompleted ? 'Reintentar' : 'Volver al mapa'}
           </Button>
         )}
       </div>
@@ -248,14 +258,15 @@ export default function Resultado() {
   );
 }
 
-
-// Tarjeta de estadística: icono + etiqueta arriba, valor abajo; entra en cascada.
-function StatTile({ icon: Icon, label, delay = 0, children }) {
+// Dato del resultado: icono con color + etiqueta arriba, valor abajo; entra en cascada.
+function StatTile({ icon: Icon, tone, label, delay = 0, children }) {
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay }}>
       <Card className="h-full">
-        <p className="mb-1 flex items-center gap-1.5 text-xs text-muted">
-          <Icon aria-hidden="true" className="h-3.5 w-3.5" />
+        <p className="mb-2 flex items-center gap-2 text-xs font-semibold text-muted">
+          <span className={`flex h-7 w-7 items-center justify-center rounded-lg ${tone}`}>
+            <Icon aria-hidden="true" className="h-4 w-4" />
+          </span>
           {label}
         </p>
         {children}

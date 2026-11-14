@@ -1,11 +1,16 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Award, Lock } from 'lucide-react';
-import ProgressBar from '../components/common/ProgressBar.jsx';
-import Spinner from '../components/common/Spinner.jsx';
-import ErrorState from '../components/common/ErrorState.jsx';
+import BadgeMedal from '../components/common/BadgeMedal.jsx';
 import Card from '../components/common/Card.jsx';
+import ErrorState from '../components/common/ErrorState.jsx';
+import ProgressRing from '../components/common/ProgressRing.jsx';
+import Spinner from '../components/common/Spinner.jsx';
 import { fetchMyBadges, getErrorMessage } from '../api/badgesApi.js';
+
+// F07 — Logros e insignias (Endpoints 13 y 14; propuesta visual, Pantalla 6).
+// Cada insignia es una medalla; el icono sale de su `code`
+// (theme/badgeIcons.js) en lugar del emoji de la API. Se muestran las diez,
+// en el orden que manda el servidor (displayOrder), sin filtrar ni reordenar.
 
 export default function Logros() {
   const [state, setState] = useState('loading');
@@ -53,20 +58,33 @@ export default function Logros() {
     );
   }
 
-  return (
-    <div className="flex flex-col gap-4 p-4">
-      <div className="flex items-baseline justify-between">
-        <h1 className="flex items-center gap-2 text-lg font-bold text-text">
-          <Award aria-hidden="true" className="h-5 w-5 text-accent" />
-          Logros e Insignias
-        </h1>
-        <span className="text-sm font-semibold text-muted">
-          {data.unlockedCount}/{data.totalCount}
-        </span>
-      </div>
-      <ProgressBar value={data.unlockedCount} max={data.totalCount} />
+  // "Próxima insignia": la primera bloqueada en el orden del servidor.
+  const nextBadge = data.badges.find((b) => !b.isUnlocked);
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+  return (
+    <div className="flex flex-col gap-5 p-4">
+      <Card className="flex items-center gap-4">
+        <ProgressRing value={data.unlockedCount} max={data.totalCount} colorClassName="text-gold" className="h-20 w-20">
+          <span className="text-lg font-extrabold text-text">
+            {data.unlockedCount}/{data.totalCount}
+          </span>
+        </ProgressRing>
+        <div className="min-w-0">
+          <h1 className="text-xl font-extrabold text-text">Logros e insignias</h1>
+          <p className="mt-0.5 text-sm text-muted">
+            {nextBadge ? (
+              <>
+                Próxima: <span className="font-bold text-text">{nextBadge.name}</span> · {nextBadge.description}
+              </>
+            ) : (
+              '¡Conseguiste todas las insignias!'
+            )}
+          </p>
+        </div>
+      </Card>
+
+      {/* F07: "Grid de 2 columnas en móvil, más en pantallas grandes" */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {data.badges.map((badge, i) => (
           <BadgeTile key={badge.code} badge={badge} index={i} />
         ))}
@@ -75,8 +93,8 @@ export default function Logros() {
   );
 }
 
-// Parte 3, F07: "Bloqueadas: gris, con el requisito legible". Solo el emoji se
-// atenúa; el nombre y el requisito quedan con contraste normal.
+// Parte 3, F07: "Bloqueadas: gris, con el requisito legible". La medalla se
+// ve como silueta punteada; el nombre y el requisito quedan con contraste normal.
 function BadgeTile({ badge, index }) {
   return (
     <motion.div
@@ -86,18 +104,13 @@ function BadgeTile({ badge, index }) {
       whileHover={badge.isUnlocked ? { y: -3 } : undefined}
     >
       <Card
-        className={`relative flex h-full flex-col items-center gap-1 text-center ${
-          badge.isUnlocked ? 'border-accent bg-accent/5' : ''
-        }`}
+        className={`flex h-full flex-col items-center gap-1.5 text-center ${badge.isUnlocked ? 'border-gold/40' : 'border-dashed'}`}
       >
-        {!badge.isUnlocked && (
-          <Lock aria-label="Bloqueada" className="absolute right-2.5 top-2.5 h-3.5 w-3.5 text-muted" />
-        )}
-        <span className={`text-4xl ${badge.isUnlocked ? '' : 'opacity-40 grayscale'}`}>{badge.emoji}</span>
-        <p className="mt-1 text-sm font-semibold text-text">{badge.name}</p>
+        <BadgeMedal code={badge.code} isUnlocked={badge.isUnlocked} />
+        <p className={`mt-1 text-sm font-extrabold ${badge.isUnlocked ? 'text-text' : 'text-text/80'}`}>{badge.name}</p>
         <p className="text-xs text-muted">{badge.description}</p>
         {badge.isUnlocked && badge.unlockedAt && (
-          <p className="mt-1 text-xs font-medium text-accent">
+          <p className="mt-auto pt-1 text-xs font-bold text-gold">
             {new Date(badge.unlockedAt).toLocaleDateString('es-PY')}
           </p>
         )}

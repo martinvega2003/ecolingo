@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowRight, Loader2, Lock, Mail, TriangleAlert } from 'lucide-react';
 import Input from '../common/Input.jsx';
+import Button from '../common/Button.jsx';
 import { useAuth } from '../../hooks/useAuth.js';
 import { homeRouteForRole } from '../../utils/routes.js';
 
@@ -82,11 +83,7 @@ const TeacherLoginForm = () => {
         )}
       </AnimatePresence>
 
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-semibold text-text transition-all hover:bg-primary/85 active:scale-[0.97] disabled:opacity-60 disabled:active:scale-100"
-      >
+      <Button type="submit" disabled={isSubmitting} className="w-full py-3 text-base">
         {isSubmitting ? (
           <>
             <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> Ingresando…
@@ -96,7 +93,7 @@ const TeacherLoginForm = () => {
             Entrar <ArrowRight aria-hidden="true" className="h-4 w-4" />
           </>
         )}
-      </button>
+      </Button>
     </form>
   );
 };

@@ -22,7 +22,7 @@ import Card from '../common/Card.jsx';
 import Button from '../common/Button.jsx';
 
 const inputClass =
-  'rounded-md border border-hair border-muted bg-surface px-3 py-2 text-text outline-none focus:border-info';
+  'rounded-xl border border-surface-2 bg-surface-2 px-3 py-2 text-text outline-none focus:border-info';
 
 export default function ClassSettingsPanel({ classInfo, onSave }) {
   const [form, setForm] = useState({

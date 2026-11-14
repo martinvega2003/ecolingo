@@ -2,7 +2,7 @@ import { Link, NavLink } from 'react-router-dom';
 import { BookOpen, Flame, LayoutDashboard, LogOut, Search, UserRound, Zap } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth.js';
 import { homeRouteForRole } from '../../utils/routes.js';
-import Logo from '../common/Logo.jsx';
+import Logo, { Wordmark } from '../common/Logo.jsx';
 import AnimatedNumber from '../common/AnimatedNumber.jsx';
 
 // Cabecera de F02 — nombre, XP y racha reales para el alumno (criterio de
@@ -14,13 +14,14 @@ import AnimatedNumber from '../common/AnimatedNumber.jsx';
 // docente → /docente) y siempre está visible; el docente, que no tiene
 // tabs, además tiene el enlace "Mis clases".
 //
-// Visual: iconos de lucide-react en lugar de emojis (los emojis dependen de
+// Visual: marca con el chanchito (Logo) y "lingo" en verde de acento;
+// iconos de lucide-react en lugar de emojis (los emojis dependen de
 // la fuente del sistema y fallan en Android viejos — GUIA_DEL_PROYECTO, 5.2).
 // En 375 px los enlaces quedan solo con icono (con aria-label); desde sm
 // se agrega el texto.
 const navLinkClass = ({ isActive }) =>
   `flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm transition-colors ${
-    isActive ? 'bg-surface font-semibold text-text' : 'text-muted hover:bg-surface hover:text-text'
+    isActive ? 'bg-surface-2 font-bold text-text' : 'text-muted hover:bg-surface hover:text-text'
   }`;
 
 const NavItem = ({ to, icon: Icon, label }) => (
@@ -36,13 +37,11 @@ const Header = () => {
   const homeRoute = homeRouteForRole(user?.role);
 
   return (
-    <header className="sticky top-0 z-20 flex items-center justify-between gap-2 border-b border-hair border-surface bg-bg/90 px-3 py-2.5 backdrop-blur sm:px-4">
+    <header className="sticky top-0 z-20 flex items-center justify-between gap-2 border-b border-surface-2 bg-bg/90 px-3 py-2.5 backdrop-blur sm:px-4">
       <div className="flex min-w-0 items-center gap-3">
         <Link to={homeRoute} aria-label="Ir al inicio" className="group flex items-center gap-2">
           <Logo />
-          <span className="hidden text-base font-extrabold text-text transition-colors group-hover:text-accent min-[420px]:inline">
-            Ecolingo
-          </span>
+          <Wordmark className="hidden text-lg min-[420px]:inline" />
         </Link>
         <span className="hidden max-w-[10rem] truncate text-sm text-muted md:inline">{user?.fullName}</span>
       </div>
@@ -51,14 +50,14 @@ const Header = () => {
         <div className="flex items-center gap-2 text-sm font-semibold">
           <span
             title="XP total"
-            className="flex items-center gap-1 rounded-full bg-surface px-2.5 py-1 text-accent"
+            className="flex items-center gap-1 rounded-full border border-surface-2 bg-surface px-3 py-1 font-extrabold text-accent"
           >
             <Zap aria-hidden="true" className="h-4 w-4 fill-accent" />
             <AnimatedNumber value={user.totalXp} />
           </span>
           <span
             title="Racha actual"
-            className="flex items-center gap-1 rounded-full bg-surface px-2.5 py-1 text-warn"
+            className="flex items-center gap-1 rounded-full border border-surface-2 bg-surface px-3 py-1 font-extrabold text-warn"
           >
             <Flame aria-hidden="true" className="h-4 w-4 fill-warn" />
             {user.currentStreak}
@@ -76,10 +75,10 @@ const Header = () => {
           onClick={logout}
           aria-label="Cerrar sesión"
           title="Cerrar sesión"
-          className="ml-1 flex items-center gap-1.5 rounded-lg border border-hair border-muted px-2.5 py-2 text-sm text-muted transition-colors hover:border-danger hover:text-danger"
+          className="ml-1 flex items-center gap-1.5 rounded-lg border border-surface-2 px-2.5 py-2 text-sm text-muted transition-colors hover:border-danger hover:text-danger"
         >
           <LogOut aria-hidden="true" className="h-4 w-4 shrink-0" />
-          <span className="hidden lg:inline">Cerrar sesión</span>
+          <span className="hidden lg:inline">Salir</span>
         </button>
       </nav>
     </header>

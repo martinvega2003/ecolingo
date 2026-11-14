@@ -24,7 +24,7 @@ const TabBar = ({ idPrefix, vertical }) =>
       className={({ isActive }) =>
         `relative flex flex-1 items-center justify-center gap-1.5 py-2.5 text-sm transition-colors ${
           vertical ? 'flex-col text-[11px]' : 'flex-row'
-        } ${isActive ? 'font-semibold text-text' : 'text-muted hover:text-text'}`
+        } ${isActive ? 'font-bold text-text' : 'text-muted hover:text-text'}`
       }
     >
       {({ isActive }) => (
@@ -32,7 +32,7 @@ const TabBar = ({ idPrefix, vertical }) =>
           {isActive && (
             <motion.span
               layoutId={`${idPrefix}-tab-indicator`}
-              className={`absolute inset-x-6 h-0.5 rounded-full bg-accent ${vertical ? 'top-0' : 'bottom-0'}`}
+              className={`absolute inset-x-6 h-1 rounded-full bg-accent ${vertical ? 'top-0' : 'bottom-0'}`}
               transition={{ type: 'spring', stiffness: 400, damping: 32 }}
             />
           )}
@@ -46,11 +46,11 @@ const TabBar = ({ idPrefix, vertical }) =>
 const StudentTabs = () => (
   <>
     {/* Móvil: barra fija abajo */}
-    <nav className="fixed inset-x-0 bottom-0 z-10 flex border-t border-hair border-surface bg-bg/95 backdrop-blur md:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-10 flex border-t border-surface-2 bg-bg/95 backdrop-blur md:hidden">
       <TabBar idPrefix="mobile" vertical />
     </nav>
     {/* Tablet/desktop: fila normal debajo de la cabecera */}
-    <nav className="hidden border-b border-hair border-surface bg-bg md:flex">
+    <nav className="hidden border-b border-surface-2 bg-bg md:flex">
       <TabBar idPrefix="desktop" />
     </nav>
   </>

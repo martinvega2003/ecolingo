@@ -12,8 +12,10 @@ import StudentTabs from './StudentTabs.jsx';
 //   guard student|teacher) muestran los tabs solo si quien navega es un
 //   alumno, para que siempre tenga cómo volver a /mapa. El docente no tiene
 //   tabs: vuelve a su panel con el enlace de la cabecera.
-// max-w-3xl evita que el contenido quede demasiado estirado en pantallas
-// grandes (criterio de aceptación: "layout correcto en 1280 px").
+// max-w-5xl deja lugar a las pantallas con columna lateral en PC (Mapa,
+// Ranking, Perfil, Glosario, panel docente). Las pantallas de una sola
+// columna se limitan ellas mismas con `mx-auto max-w-3xl` para no quedar
+// estiradas (criterio de aceptación: "layout correcto en 1280 px").
 // Transición: el contenido entra con un fundido corto al cambiar de sección.
 // Se usa el primer segmento de la ruta como clave (no la ruta completa) para
 // que /glosario y /glosario/:slug no se remonten ni recarguen.
@@ -27,7 +29,7 @@ const AppLayout = ({ showTabs = false, tabsForStudents = false }) => {
     <div className="min-h-screen bg-bg text-text">
       <Header />
       {withTabs && <StudentTabs />}
-      <main className={`mx-auto max-w-3xl ${withTabs ? 'pb-20 md:pb-4' : 'pb-4'}`}>
+      <main className={`mx-auto max-w-5xl ${withTabs ? 'pb-20 md:pb-4' : 'pb-4'}`}>
         <motion.div
           key={sectionKey}
           initial={{ opacity: 0, y: 8 }}
